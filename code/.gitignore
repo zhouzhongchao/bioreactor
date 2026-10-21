@@ -1,0 +1,38 @@
+# Environments, build products and caches are specific to each computer.
+.python310/
+.venv/
+venv/
+runtime/
+**/__pycache__/
+**/.pytest_cache/
+**/.pio/
+**/node_modules/
+**/.git/
+**/.vscode/
+*.pyc
+*.pyo
+*.log
+*.bak
+*.tmp
+*.zip
+
+# Experimental data and historical designs are not application source.
+output/
+nano25_recordings/
+control/logs/
+control/model_backups/
+control/codex_candidate_*.json
+control/codex_compensator_candidate_*.json
+control/*_previous.pt
+control/*_shadow.pt
+control/*_rejected.pt
+control/*_state_replay.npz
+
+# Never commit authentication or local credentials.
+.env
+.env.*
+!.env.example
+auth.json
+credentials.json
+**/*.key
+/工作簿1.xlsx

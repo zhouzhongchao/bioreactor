@@ -1,0 +1,100 @@
+{
+  "schema": 1,
+  "sample_dt": 0.05,
+  "generation": 0,
+  "consecutive_wins": 0,
+  "consecutive_failures": 0,
+  "rounds_seen": 3,
+  "tracking_mse_history_deg2": [
+    154.37593840959914,
+    125.47260336016892,
+    151.39740651817021
+  ],
+  "canary": {
+    "active": false
+  },
+  "history": [
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rounds_seen": 1,
+      "replay_rounds": 1,
+      "reason": "已累计1/3轮，等待三轮合并训练"
+    },
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rounds_seen": 2,
+      "replay_rounds": 2,
+      "reason": "已累计2/3轮，等待三轮合并训练"
+    },
+    {
+      "samples": 630,
+      "round_samples": 210,
+      "train_samples": 504,
+      "validation_samples": 126,
+      "trained": true,
+      "loss": 0.5328530073165894,
+      "active": {
+        "angle_mse_deg2": 0.4316747188568115,
+        "angle_rmse_deg": 0.6570195555686951,
+        "velocity_rmse_deg_s": 13.140391111373901,
+        "pressure_rmse_kpa": 3.610839366912842,
+        "all_angle_rmse_deg": 0.5762607455253601,
+        "angle_samples": 84,
+        "pressure_samples": 126
+      },
+      "shadow_before": {
+        "angle_mse_deg2": 0.4316747188568115,
+        "angle_rmse_deg": 0.6570195555686951,
+        "velocity_rmse_deg_s": 13.140391111373901,
+        "pressure_rmse_kpa": 3.610839366912842,
+        "all_angle_rmse_deg": 0.5762607455253601,
+        "angle_samples": 84,
+        "pressure_samples": 126
+      },
+      "shadow": {
+        "angle_mse_deg2": 0.28575488924980164,
+        "angle_rmse_deg": 0.53456050157547,
+        "velocity_rmse_deg_s": 10.691208839416504,
+        "pressure_rmse_kpa": 3.4841246604919434,
+        "all_angle_rmse_deg": 0.4655010998249054,
+        "angle_samples": 84,
+        "pressure_samples": 126
+      },
+      "epochs": 500,
+      "consolidated": true,
+      "replay_rounds": 3,
+      "replay_epochs": 500,
+      "active_rollout_angle_rmse_deg": 3.83177985900601,
+      "shadow_rollout_angle_rmse_deg": 2.8770266507398676,
+      "passed": true,
+      "consecutive_wins": 1,
+      "promoted": true,
+      "generation_before": 0,
+      "tracking_weight_mean": 2.9889273643493652,
+      "tracking_weight_max": 4.0,
+      "provisional": true,
+      "tracking_baseline_mse_deg2": 143.74864942931276,
+      "generation_after": 1
+    },
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rolled_back": true,
+      "canary": {
+        "checked": true,
+        "accepted": false,
+        "baseline_mse_deg2": 143.74864942931276,
+        "candidate_mse_deg2": 1787.124033060456,
+        "ratio": 12.432283991226365
+      },
+      "reason": "候选模型实机跟踪未通过，已自动恢复上一代",
+      "generation_after": 0
+    }
+  ],
+  "architecture": "mlp"
+}

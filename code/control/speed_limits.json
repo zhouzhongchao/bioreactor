@@ -1,0 +1,132 @@
+{
+  "schema": 2,
+  "coordinate_version": 2,
+  "created": "2026-09-25 03:31:16",
+  "mount": "ry-",
+  "voltage_mv": 2500,
+  "trials_per_direction": 2,
+  "velocity_fit_window_s": 0.3,
+  "planning_factor": 0.7,
+  "directions": {
+    "y+": {
+      "channel": 0,
+      "max_filtered_deg_s": 15.649,
+      "repeatable_p95_deg_s": 12.451,
+      "planning_deg_s": 8.716,
+      "trials": [
+        {
+          "trial": 1,
+          "direction": "y+",
+          "channel": 0,
+          "peak_deg_s": 13.62955548848932,
+          "p95_deg_s": 12.4509780643247,
+          "max_displacement_deg": 37.19196938942839,
+          "stop_reason": "达到5秒"
+        },
+        {
+          "trial": 2,
+          "direction": "y+",
+          "channel": 0,
+          "peak_deg_s": 15.648896730986914,
+          "p95_deg_s": 15.071388008657978,
+          "max_displacement_deg": 55.923399016479166,
+          "stop_reason": "达到5秒"
+        }
+      ]
+    },
+    "y-": {
+      "channel": 1,
+      "max_filtered_deg_s": 45.151,
+      "repeatable_p95_deg_s": 38.807,
+      "planning_deg_s": 27.165,
+      "trials": [
+        {
+          "trial": 1,
+          "direction": "y-",
+          "channel": 1,
+          "peak_deg_s": 44.36067590597785,
+          "p95_deg_s": 38.807040080399545,
+          "max_displacement_deg": 53.47398065757899,
+          "stop_reason": "达到5秒"
+        },
+        {
+          "trial": 2,
+          "direction": "y-",
+          "channel": 1,
+          "peak_deg_s": 45.15063972222177,
+          "p95_deg_s": 39.78955510278744,
+          "max_displacement_deg": 51.628428304286686,
+          "stop_reason": "达到5秒"
+        }
+      ]
+    },
+    "φ+": {
+      "channel": 2,
+      "max_filtered_deg_s": 29.373,
+      "repeatable_p95_deg_s": 27.719,
+      "planning_deg_s": 19.404,
+      "trials": [
+        {
+          "trial": 1,
+          "direction": "φ+",
+          "channel": 2,
+          "peak_deg_s": 29.37328627025946,
+          "p95_deg_s": 27.719404900470387,
+          "max_displacement_deg": 40.60841164648691,
+          "stop_reason": "快速综合检测五档扫描"
+        }
+      ]
+    },
+    "φ-": {
+      "channel": 3,
+      "max_filtered_deg_s": 26.288,
+      "repeatable_p95_deg_s": 24.64,
+      "planning_deg_s": 17.248,
+      "trials": [
+        {
+          "trial": 1,
+          "direction": "φ-",
+          "channel": 3,
+          "peak_deg_s": 26.287675335156393,
+          "p95_deg_s": 24.64013039476036,
+          "max_displacement_deg": 24.881269791796036,
+          "stop_reason": "快速综合检测五档扫描"
+        }
+      ]
+    },
+    "x-": {
+      "channel": 4,
+      "max_filtered_deg_s": 13.627,
+      "repeatable_p95_deg_s": 13.231,
+      "planning_deg_s": 9.261,
+      "trials": [
+        {
+          "trial": 1,
+          "direction": "x-",
+          "channel": 4,
+          "peak_deg_s": 13.62699962766502,
+          "p95_deg_s": 13.230544669291442,
+          "max_displacement_deg": 15.220600387605558,
+          "stop_reason": "快速综合检测五档扫描"
+        }
+      ]
+    },
+    "x+": {
+      "channel": 5,
+      "max_filtered_deg_s": 20.427,
+      "repeatable_p95_deg_s": 17.878,
+      "planning_deg_s": 12.514,
+      "trials": [
+        {
+          "trial": 1,
+          "direction": "x+",
+          "channel": 5,
+          "peak_deg_s": 20.427486585595236,
+          "p95_deg_s": 17.87764785740958,
+          "max_displacement_deg": 20.661885856422806,
+          "stop_reason": "快速综合检测五档扫描"
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "sample_dt": 0.05,
+  "architecture": "gru",
+  "generation": 0,
+  "consecutive_wins": 0,
+  "consecutive_failures": 0,
+  "rounds_seen": 0,
+  "tracking_mse_history_deg2": [],
+  "canary": {
+    "active": false
+  },
+  "history": []
+}

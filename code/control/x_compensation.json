@@ -1,0 +1,124 @@
+{
+  "schema": 1,
+  "ratios": {
+    "9_plus_67": 0.5,
+    "10_plus_23": 0.75
+  },
+  "tests": {
+    "9_plus_67": {
+      "saved_at": "2026-09-07 01:26:00",
+      "mount": "ry-",
+      "primary_mv": 800,
+      "recommended_ratio": 0.5,
+      "selection": "min_abs_phi_per_effective_x",
+      "results": [
+        {
+          "ratio": 0.0,
+          "elapsed_s": 2.001242160797119,
+          "delta_x_deg": -8.702407748882145,
+          "delta_y_deg": -1.3976083411898408,
+          "delta_phi_deg": 2.034931271327807,
+          "directed_x_deg": 8.702407748882145,
+          "stop_reason": "达到2秒",
+          "coupling_abs_phi_per_x": 0.23383543153206093
+        },
+        {
+          "ratio": 0.25,
+          "elapsed_s": 2.0055782794952393,
+          "delta_x_deg": -9.012436233719127,
+          "delta_y_deg": -1.6037736847737813,
+          "delta_phi_deg": 2.2169916969116183,
+          "directed_x_deg": 9.012436233719127,
+          "stop_reason": "达到2秒",
+          "coupling_abs_phi_per_x": 0.24599249741340373
+        },
+        {
+          "ratio": 0.5,
+          "elapsed_s": 2.006129503250122,
+          "delta_x_deg": -9.624464705080083,
+          "delta_y_deg": -1.9210161871837081,
+          "delta_phi_deg": -0.9254019458353306,
+          "directed_x_deg": 9.624464705080083,
+          "stop_reason": "达到2秒",
+          "coupling_abs_phi_per_x": 0.0961510041537038
+        },
+        {
+          "ratio": 0.75,
+          "elapsed_s": 2.012951374053955,
+          "delta_x_deg": -11.430646960277295,
+          "delta_y_deg": -5.0696381708444305,
+          "delta_phi_deg": -9.999932031757591,
+          "directed_x_deg": 11.430646960277295,
+          "stop_reason": "达到2秒",
+          "coupling_abs_phi_per_x": 0.8748351748162996
+        },
+        {
+          "ratio": 1.0,
+          "elapsed_s": 2.00006365776062,
+          "delta_x_deg": -11.309547599950825,
+          "delta_y_deg": -7.442225373618099,
+          "delta_phi_deg": -15.692611039787295,
+          "directed_x_deg": 11.309547599950825,
+          "stop_reason": "达到2秒",
+          "coupling_abs_phi_per_x": 1.3875542678520163
+        }
+      ]
+    },
+    "10_plus_23": {
+      "saved_at": "2026-09-07 01:26:24",
+      "mount": "ry-",
+      "primary_mv": 800,
+      "recommended_ratio": 0.75,
+      "selection": "min_abs_phi_per_effective_x",
+      "results": [
+        {
+          "ratio": 0.0,
+          "elapsed_s": 2.00081467628479,
+          "delta_x_deg": 0.0,
+          "delta_y_deg": 0.0,
+          "delta_phi_deg": 0.0,
+          "directed_x_deg": 0.0,
+          "stop_reason": "达到2秒"
+        },
+        {
+          "ratio": 0.25,
+          "elapsed_s": 2.0473287105560303,
+          "delta_x_deg": 0.0,
+          "delta_y_deg": 0.0,
+          "delta_phi_deg": 0.0,
+          "directed_x_deg": 0.0,
+          "stop_reason": "达到2秒"
+        },
+        {
+          "ratio": 0.5,
+          "elapsed_s": 2.049412727355957,
+          "delta_x_deg": 0.11506468958742469,
+          "delta_y_deg": 0.04191879039463458,
+          "delta_phi_deg": 0.2884580816510398,
+          "directed_x_deg": 0.11506468958742469,
+          "stop_reason": "达到2秒"
+        },
+        {
+          "ratio": 0.75,
+          "elapsed_s": 2.0271809101104736,
+          "delta_x_deg": 2.620188619684461,
+          "delta_y_deg": 0.8797656536541945,
+          "delta_phi_deg": 9.024380197741577,
+          "directed_x_deg": 2.620188619684461,
+          "stop_reason": "达到2秒",
+          "coupling_abs_phi_per_x": 3.4441719691265384
+        },
+        {
+          "ratio": 1.0,
+          "elapsed_s": 2.0486083030700684,
+          "delta_x_deg": 1.6760751135081269,
+          "delta_y_deg": -0.6889591265838136,
+          "delta_phi_deg": 14.835618077640081,
+          "directed_x_deg": 1.6760751135081269,
+          "stop_reason": "达到2秒",
+          "coupling_abs_phi_per_x": 8.851404067797555
+        }
+      ]
+    }
+  }
+}

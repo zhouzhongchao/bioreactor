@@ -1,0 +1,38 @@
+{
+  "schema": 1,
+  "model_version": "force_estimator_v1_vib_xyz_seeds2056_2059_2037",
+  "fusion_family": "fusion",
+  "fusion_seeds": [2056, 2059, 2037],
+  "selection_scope": "Best-of-93 individual seeds selected using test loss with Fx RMSE <= 4.5 N; ensemble subsequently evaluated on the same test split",
+  "deployment_mode": "vib_multihead_xyz",
+  "created_from": "20260923_062542_476_slow_rom_gradual",
+  "channel_order": ["A1+5", "A2+3", "A4+8", "A6+7", "A9", "A10"],
+  "features_per_channel": ["P_kPa", "L_mm", "d_active_mm", "d_passive_mm", "dP_dt_kPa_s", "dL_dt_mm_s"],
+  "inference": {
+    "fxyz": "three-seed mean of one VIB multi-head beta=1e-4 model that directly outputs Fx, Fy, and Fz; deterministic posterior mean"
+  },
+  "test_rmse_n_excluding_process_25": {
+    "fx": 3.42564142,
+    "fy": 1.03612655,
+    "fz": 1.28438873,
+    "macro": 1.91538556
+  },
+  "excluded_test_processes": [25],
+  "seeds": [2056, 2059, 2037],
+  "separate_seeds": [2025, 2026, 2027],
+  "weights_sha256": {
+    "fusion/model_seed2056.pt": "8f7ed8b0c6852b801052ab6f121c6713b9528afcc46dbae4c9310cf92d838fb2",
+    "fusion/model_seed2059.pt": "fb1d03a245dce67f518fcd421a242ae7c871b6b0ee55dea7729ab123eec97016",
+    "fusion/model_seed2037.pt": "e19a4a08b1b8867519d3bcad49c8afe40a0bbb9563ef2e3270ddb8f75d7b5ea9",
+    "fx/model_seed2025.pt": "74d45645e6bdb75b8cb7a29d2842a82be6507f9d9e2b2471ed348cfb33d2ee3c",
+    "fx/model_seed2026.pt": "71755b6bdd1bee81e8d2bf650454724a753095dd23a94a9a4b4c714ee7135ce3",
+    "fx/model_seed2027.pt": "d04c7c5563f16729ef03bb98ca37c65e06309bc382eb2ca39aef0fbb175b6f81",
+    "fy/model_seed2025.pt": "96e37869fcacfa4b1b9b2b9ac899fb7841fa38a32d902f94de6ce133e0ffded3",
+    "fy/model_seed2026.pt": "487bf33661ccdbf3e4cb43a38afaae53d65820199965bd36002d8cc21e70115f",
+    "fy/model_seed2027.pt": "c54b3ad783c289827e44be72eab89d66c49c8f090a159779a79ef9a69278b8db",
+    "fz/model_seed2025.pt": "bbb8bf5bc95e07d5ef9b247b0ba25ce391fd34bd6a7e6aad215d4f612a3e1a64",
+    "fz/model_seed2026.pt": "fdf19ebc5f190fed0166ffa17a9db0c69db3ac0a16b9fdec21ac408cae73910d",
+    "fz/model_seed2027.pt": "80a8c6a6e5a4faffd2e91ac66f952f397d9deb0030bc5442172cc71dddbf187f"
+  },
+  "warning": "Validation excludes process 25. Predictions are monitoring-only and must not enter the control loop."
+}

@@ -1,0 +1,45 @@
+{
+  "schema": 1,
+  "kind": "history_residual_forward_model",
+  "architecture": "history_mlp",
+  "sample_dt": 0.05,
+  "history_steps": 10,
+  "history_seconds": 0.5,
+  "base_model": "pure_mpc_model.pt",
+  "training_files": [
+    "pure_mpc_20260906_020046.csv",
+    "pure_mpc_20260906_020309.csv",
+    "pure_mpc_20260906_020657.csv",
+    "pure_mpc_20260906_021409.csv",
+    "pure_mpc_20260906_021453.csv",
+    "pure_mpc_20260906_021537.csv",
+    "pure_mpc_20260906_021806.csv",
+    "pure_mpc_20260906_021850.csv"
+  ],
+  "validation_files": [
+    "pure_mpc_20260906_021928.csv",
+    "pure_mpc_20260906_022055.csv"
+  ],
+  "training_samples": 6752,
+  "validation_samples": 680,
+  "selected_epoch": 4,
+  "validation_normalized_mse": 7.327795028686523,
+  "base_validation_metrics": {
+    "one_step_angle_rmse_deg": 0.4364867570260358,
+    "moving_one_step_angle_rmse_deg": 0.4561207690591969,
+    "one_step_pressure_rmse_kpa": 2.985720816735525,
+    "rollout_24_angle_rmse_deg": 6.55311746264682,
+    "rollout_24_pressure_rmse_kpa": 5.462425369341657,
+    "one_step_samples": 680,
+    "moving_samples": 622
+  },
+  "validation_metrics": {
+    "one_step_angle_rmse_deg": 0.4328876689743229,
+    "moving_one_step_angle_rmse_deg": 0.4523679353875869,
+    "one_step_pressure_rmse_kpa": 2.9845375580409343,
+    "rollout_24_angle_rmse_deg": 6.388902983669218,
+    "rollout_24_pressure_rmse_kpa": 5.385816656147831,
+    "one_step_samples": 680,
+    "moving_samples": 622
+  }
+}

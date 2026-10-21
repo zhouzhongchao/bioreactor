@@ -1,0 +1,8 @@
+{
+  "folders": [
+    { "path": "seq_demo" },
+    { "path": "control_test" },
+    { "path": "bno055_test" }
+  ],
+  "settings": { "files.associations": { "*.ino": "cpp" } }
+}

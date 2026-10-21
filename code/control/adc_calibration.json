@@ -1,0 +1,98 @@
+{
+  "schema": 2,
+  "channel": 0,
+  "muscles": [
+    1,
+    5
+  ],
+  "formula": "piecewise_linear(delta_raw, target_kpa); delta_raw = adc_raw - per_channel_zero_raw",
+  "slope_kpa_per_count": 0.07690476686956915,
+  "intercept_kpa": -279.5988156693491,
+  "linear_fit_rmse_kpa": 6.192259454362771,
+  "table": [
+    {
+      "delta_raw": 0.0,
+      "target_kpa": 0.0
+    },
+    {
+      "delta_raw": 227.96000000000004,
+      "target_kpa": 22.5
+    },
+    {
+      "delta_raw": 645.3499999999999,
+      "target_kpa": 45.0
+    },
+    {
+      "delta_raw": 999.0499999999997,
+      "target_kpa": 67.5
+    },
+    {
+      "delta_raw": 1328.9500000000003,
+      "target_kpa": 90.0
+    },
+    {
+      "delta_raw": 1448.9699999999998,
+      "target_kpa": 112.5
+    },
+    {
+      "delta_raw": 1723.73,
+      "target_kpa": 135.0
+    },
+    {
+      "delta_raw": 2006.31,
+      "target_kpa": 157.5
+    },
+    {
+      "delta_raw": 2252.72,
+      "target_kpa": 180.0
+    }
+  ],
+  "points": [
+    {
+      "dac_mv": 0,
+      "target_kpa": 0.0,
+      "adc_raw": 3635.65
+    },
+    {
+      "dac_mv": 250,
+      "target_kpa": 22.5,
+      "adc_raw": 3863.61
+    },
+    {
+      "dac_mv": 500,
+      "target_kpa": 45.0,
+      "adc_raw": 4281.0
+    },
+    {
+      "dac_mv": 750,
+      "target_kpa": 67.5,
+      "adc_raw": 4634.7
+    },
+    {
+      "dac_mv": 1000,
+      "target_kpa": 90.0,
+      "adc_raw": 4964.6
+    },
+    {
+      "dac_mv": 1250,
+      "target_kpa": 112.5,
+      "adc_raw": 5084.62
+    },
+    {
+      "dac_mv": 1500,
+      "target_kpa": 135.0,
+      "adc_raw": 5359.38
+    },
+    {
+      "dac_mv": 1750,
+      "target_kpa": 157.5,
+      "adc_raw": 5641.96
+    },
+    {
+      "dac_mv": 2000,
+      "target_kpa": 180.0,
+      "adc_raw": 5888.37
+    }
+  ],
+  "saved_at": "2026-09-05 03:28:37"
+}

@@ -1,0 +1,1291 @@
+{
+  "schema": 1,
+  "task_hash": "cf813ab4021570a0d1449405b7a24ae9c511e8b6458e1a4a0becb3bfe86023c1",
+  "generation": 5,
+  "active": {
+    "kp_mv_per_deg": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "kd_mv_per_deg_s": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "ki_mv_per_deg_s": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "bias_mv": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "feedforward_knots": []
+  },
+  "previous": {
+    "kp_mv_per_deg": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "kd_mv_per_deg_s": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "ki_mv_per_deg_s": [
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ],
+      [
+        0.0,
+        0.0,
+        0.0
+      ]
+    ],
+    "bias_mv": [
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0,
+      0.0
+    ],
+    "feedforward_knots": []
+  },
+  "active_kind": "python_class",
+  "previous_kind": "python_class",
+  "active_source": "class Compensator:\n    def __init__(self):\n        self.output_limit_mv = np.array([900.0, 0.0, 180.0, 600.0, 0.0, 0.0])\n        self.output_slew_mv_per_s = np.array([900.0, 0.0, 350.0, 700.0, 0.0, 0.0])\n        self.output = np.zeros(6)\n        self.filtered_velocity = np.zeros(3)\n        self.last_time = 0.0\n        self.started = False\n        self.triggered = np.array([False, False, False])\n        self.finished = np.array([False, False, False])\n        self.age = np.zeros(3)\n\n    def reset(self, feedback):\n        self.output = np.zeros(6)\n        self.filtered_velocity = np.zeros(3)\n        self.last_time = 0.0\n        self.started = False\n        self.triggered = np.array([False, False, False])\n        self.finished = np.array([False, False, False])\n        self.age = np.zeros(3)\n\n    def compute(self, u_mpc, pose, velocity, reference_pose, reference_velocity, pressure, lock_state, trajectory_time):\n        base = np.asarray(u_mpc, dtype=float)\n        base_valid = (base == base) & (base >= 0.0) & (base <= 2500.0)\n        base = np.clip(np.where(base == base, base, 0.0), 0.0, 2500.0)\n        measured = np.asarray(pose, dtype=float)\n        reference = np.asarray(reference_pose, dtype=float)\n        speed = np.asarray(velocity, dtype=float)\n        ref_speed = np.asarray(reference_velocity, dtype=float)\n        valid = (measured == measured) & (reference == reference) & (speed == speed) & (ref_speed == ref_speed)\n        valid = valid & (np.abs(measured) < 1000.0) & (np.abs(reference) < 1000.0) & (np.abs(speed) < 1000.0) & (np.abs(ref_speed) < 1000.0)\n        measured = np.clip(np.where(measured == measured, measured, 0.0), -1000.0, 1000.0)\n        reference = np.clip(np.where(reference == reference, reference, 0.0), -1000.0, 1000.0)\n        speed = np.clip(np.where(speed == speed, speed, 0.0), -150.0, 150.0)\n        ref_speed = np.clip(np.where(ref_speed == ref_speed, ref_speed, 0.0), -150.0, 150.0)\n        pressures = np.asarray(pressure, dtype=float)\n        pressure_valid = (pressures == pressures) & (pressures >= 0.0) & (pressures < 1000.0)\n        pressures = np.clip(np.where(pressures == pressures, pressures, 1000.0), 0.0, 1000.0)\n        states = np.asarray(lock_state)\n        locked = states == 'L'\n        opened = states == 'o'\n        t = float(trajectory_time)\n        if not (t == t and abs(t) < 1000000000.0):\n            t = self.last_time\n        elapsed = 0.0\n        if not self.started:\n            self.filtered_velocity = speed\n            self.last_time = t\n            self.started = True\n            dt = 0.0\n        else:\n            elapsed = min(10.0, max(0.0, t - self.last_time))\n            dt = min(0.05, elapsed)\n            if t >= self.last_time:\n                self.last_time = t\n        self.filtered_velocity = self.filtered_velocity + (dt / (0.08 + dt)) * (speed - self.filtered_velocity)\n        self.output = np.where(locked, self.output, 0.0)\n        error = np.clip(reference - measured, -100.0, 100.0)\n        target = np.zeros(6)\n        ey = float(error[1])\n        ry = float(ref_speed[1])\n        vy = float(self.filtered_velocity[1])\n        ep = float(error[2])\n        rp = float(ref_speed[2])\n        vp = float(self.filtered_velocity[2])\n\n        # One reference-triggered charging opportunity per axis and reset.\n        self.age = np.where(self.triggered, np.minimum(1.0, self.age + elapsed), 0.0)\n        trigger = valid & (ref_speed > np.array([1000.0, 2.0, 1.0]))\n        self.triggered = self.triggered | trigger\n        axis_pressure = np.array([1000.0, pressures[0], pressures[2]])\n        axis_pressure_valid = np.array([False, pressure_valid[0], pressure_valid[2]])\n        fast_speed = np.maximum(speed, self.filtered_velocity)\n        stop = (self.age >= 0.60) | (~valid) | (~axis_pressure_valid) | (axis_pressure >= 18.0) | (fast_speed >= 2.0) | (error <= 0.0) | (ref_speed <= 0.5)\n        self.finished = self.finished | (self.triggered & stop)\n        window = np.clip((0.60 - self.age) / 0.25, 0.0, 1.0)\n        pressure_gate = np.clip((18.0 - axis_pressure) / 8.0, 0.0, 1.0)\n        motion_gate = np.clip((2.0 - fast_speed) / 1.5, 0.0, 1.0)\n        boost = np.array([0.0, 30.0, 25.0]) * window * pressure_gate * motion_gate * np.clip(error / 0.5, 0.0, 1.0)\n        boost = np.where(self.triggered & (~self.finished), boost, 0.0)\n        boost_y = 0.0\n        boost_p = 0.0\n        ascent_y = float(np.clip((ry - 0.5) / 2.5, 0.0, 1.0))\n        closing_fast_y = max(float(speed[1]), vy) - ry\n        closing_y = vy - ry\n        if locked[0] and opened[1] and valid[1] and base_valid[0] and base_valid[1] and base[0] > 0.0 and base[1] == 0.0:\n            # Tiny moving-ascent trim; no integral or late charging pulse.\n            speed_deficit = float(np.clip((-closing_fast_y - 0.5) / 3.0, 0.0, 1.0))\n            prediction_margin = float(np.clip((ey - 0.55 * max(closing_fast_y, 0.0) - 2.0) / 4.0, 0.0, 1.0))\n            moving = float(np.clip((min(float(speed[1]), vy) - 2.0) / 2.0, 0.0, 1.0))\n            trim_y = 6.0 * ascent_y * speed_deficit * prediction_margin * moving\n            boost_y = min(float(boost[1]) + trim_y, max(0.0, 2250.0 - float(base[0])))\n        if locked[2] and opened[3] and valid[2] and base_valid[2] and base_valid[3] and base[2] > 0.0 and base[3] == 0.0:\n            boost_p = min(float(boost[2]), max(0.0, 2250.0 - float(base[2])))\n\n        # Retain the accepted Y ascent, hold and return braking.\n        return_y = float(np.clip((-ry - 1.0) / 5.0, 0.0, 1.0))\n        hold_y = 1.0 - ascent_y - return_y\n        approach_fast_y = float(np.clip((closing_fast_y - 2.0) / 6.0, 0.0, 1.0))\n        approach_y = float(np.clip((closing_y - 2.0) / 6.0, 0.0, 1.0))\n        excess_y = float(np.clip((-ey - 1.0) / 3.0, 0.0, 1.0))\n        rise_brake = 30.0 * max(-ey + 0.55 * closing_fast_y - 1.0, 0.0) * max(approach_fast_y, excess_y)\n        hold_brake = 30.0 * max(-ey + 0.35 * closing_y - 1.0, 0.0) * max(approach_y, excess_y)\n        return_brake = 30.0 * max(-ey + 0.55 * closing_y - 1.0, 0.0)\n        brake_y = ascent_y * rise_brake + hold_y * hold_brake + return_y * return_brake\n        if locked[0] and valid[1]:\n            target[0] = boost_y - min(float(base[0]), brake_y)\n\n        # Retain phi positive-side braking.\n        closing_p = vp - rp\n        near_upper = float(np.clip((4.0 - ep) / 4.0, 0.0, 1.0))\n        upper_excess = max(-ep - 1.2, 0.0)\n        upper_prediction = max(-ep + 0.25 * closing_p - 1.2, 0.0)\n        if locked[2] and valid[2]:\n            target[2] = boost_p - min(float(base[2]), 18.0 * max(upper_excess, near_upper * upper_prediction))\n\n        ascent_p = float(np.clip((rp - 0.5) / 2.5, 0.0, 1.0))\n        release_gate = float(np.clip((ep + 0.5) / 1.0, 0.0, 1.0))\n        early_release = min(300.0, float(base[3])) * ascent_p * release_gate\n        upper_region = float(np.clip((float(reference[2]) - 10.0) / 10.0, 0.0, 1.0))\n        slow_reference = float(np.clip((3.0 - abs(rp)) / 2.5, 0.0, 1.0))\n        no_large_excess = float(np.clip((ep + 3.0) / 2.0, 0.0, 1.0))\n        dwell_release = float(base[3]) * upper_region * slow_reference * no_large_excess\n        lower_deficit = max(ep - 1.2, 0.0)\n        near_lower = float(np.clip((ep + 4.0) / 4.0, 0.0, 1.0))\n        # Apply the extra prediction only during commanded descent.\n        descent_weight = float(np.clip((-rp - 0.5) / 2.5, 0.0, 1.0))\n        prediction_time = 0.25 + 0.10 * descent_weight\n        descent_gain = 24.0 + 2.0 * descent_weight\n        lower_prediction = max(ep - prediction_time * closing_p - 1.2, 0.0)\n        descent_brake = descent_gain * max(lower_deficit, near_lower * lower_prediction)\n        if locked[3] and valid[2]:\n            target[3] = -min(float(base[3]), max(early_release, dwell_release, descent_brake))\n\n        positive_limit = np.minimum(self.output_limit_mv, np.array([30.0, 0.0, 25.0, 0.0, 0.0, 0.0]))\n        target = np.where(locked, np.clip(target, -self.output_limit_mv, positive_limit), 0.0)\n        step = self.output_slew_mv_per_s * dt\n        result = self.output + np.clip(target - self.output, -step, step)\n        positive_rise = np.minimum(self.output_slew_mv_per_s, np.array([100.0, 0.0, 100.0, 700.0, 0.0, 0.0])) * dt\n        result = np.minimum(result, np.maximum(self.output, 0.0) + positive_rise)\n        result = np.clip(result, -self.output_limit_mv, positive_limit)\n        # Unlock reset is the mandated exception to residual slew.\n        # Fixed planner must provide pair-exclusive base drive and break-before-make.\n        self.output = np.where(locked, result, 0.0)\n        return self.output + np.zeros(6)",
+  "previous_source": "class Compensator:\n    def __init__(self):\n        self.output_limit_mv = np.array([900.0, 0.0, 180.0, 600.0, 0.0, 0.0])\n        self.output_slew_mv_per_s = np.array([900.0, 0.0, 350.0, 700.0, 0.0, 0.0])\n        self.output = np.zeros(6)\n        self.filtered_velocity = np.zeros(3)\n        self.last_time = 0.0\n        self.started = False\n        self.triggered = np.array([False, False, False])\n        self.finished = np.array([False, False, False])\n        self.age = np.zeros(3)\n\n    def reset(self, feedback):\n        self.output = np.zeros(6)\n        self.filtered_velocity = np.zeros(3)\n        self.last_time = 0.0\n        self.started = False\n        self.triggered = np.array([False, False, False])\n        self.finished = np.array([False, False, False])\n        self.age = np.zeros(3)\n\n    def compute(self, u_mpc, pose, velocity, reference_pose, reference_velocity, pressure, lock_state, trajectory_time):\n        base = np.asarray(u_mpc, dtype=float)\n        base_valid = (base == base) & (base >= 0.0) & (base <= 2500.0)\n        base = np.clip(np.where(base == base, base, 0.0), 0.0, 2500.0)\n        measured = np.asarray(pose, dtype=float)\n        reference = np.asarray(reference_pose, dtype=float)\n        speed = np.asarray(velocity, dtype=float)\n        ref_speed = np.asarray(reference_velocity, dtype=float)\n        valid = (measured == measured) & (reference == reference) & (speed == speed) & (ref_speed == ref_speed)\n        valid = valid & (np.abs(measured) < 1000.0) & (np.abs(reference) < 1000.0) & (np.abs(speed) < 1000.0) & (np.abs(ref_speed) < 1000.0)\n        measured = np.clip(np.where(measured == measured, measured, 0.0), -1000.0, 1000.0)\n        reference = np.clip(np.where(reference == reference, reference, 0.0), -1000.0, 1000.0)\n        speed = np.clip(np.where(speed == speed, speed, 0.0), -150.0, 150.0)\n        ref_speed = np.clip(np.where(ref_speed == ref_speed, ref_speed, 0.0), -150.0, 150.0)\n        pressures = np.asarray(pressure, dtype=float)\n        pressure_valid = (pressures == pressures) & (pressures >= 0.0) & (pressures < 1000.0)\n        pressures = np.clip(np.where(pressures == pressures, pressures, 1000.0), 0.0, 1000.0)\n        states = np.asarray(lock_state)\n        locked = states == 'L'\n        opened = states == 'o'\n        t = float(trajectory_time)\n        if not (t == t and abs(t) < 1000000000.0):\n            t = self.last_time\n        elapsed = 0.0\n        if not self.started:\n            self.filtered_velocity = speed\n            self.last_time = t\n            self.started = True\n            dt = 0.0\n        else:\n            elapsed = min(10.0, max(0.0, t - self.last_time))\n            dt = min(0.05, elapsed)\n            if t >= self.last_time:\n                self.last_time = t\n        self.filtered_velocity = self.filtered_velocity + (dt / (0.08 + dt)) * (speed - self.filtered_velocity)\n        self.output = np.where(locked, self.output, 0.0)\n        error = np.clip(reference - measured, -100.0, 100.0)\n        target = np.zeros(6)\n        ey = float(error[1])\n        ry = float(ref_speed[1])\n        vy = float(self.filtered_velocity[1])\n        ep = float(error[2])\n        rp = float(ref_speed[2])\n        vp = float(self.filtered_velocity[2])\n\n        # One reference-triggered charging opportunity per axis and reset.\n        self.age = np.where(self.triggered, np.minimum(1.0, self.age + elapsed), 0.0)\n        trigger = valid & (ref_speed > np.array([1000.0, 2.0, 1.0]))\n        self.triggered = self.triggered | trigger\n        axis_pressure = np.array([1000.0, pressures[0], pressures[2]])\n        axis_pressure_valid = np.array([False, pressure_valid[0], pressure_valid[2]])\n        fast_speed = np.maximum(speed, self.filtered_velocity)\n        stop = (self.age >= 0.60) | (~valid) | (~axis_pressure_valid) | (axis_pressure >= 18.0) | (fast_speed >= 2.0) | (error <= 0.0) | (ref_speed <= 0.5)\n        self.finished = self.finished | (self.triggered & stop)\n        window = np.clip((0.60 - self.age) / 0.25, 0.0, 1.0)\n        pressure_gate = np.clip((18.0 - axis_pressure) / 8.0, 0.0, 1.0)\n        motion_gate = np.clip((2.0 - fast_speed) / 1.5, 0.0, 1.0)\n        boost = np.array([0.0, 30.0, 25.0]) * window * pressure_gate * motion_gate * np.clip(error / 0.5, 0.0, 1.0)\n        boost = np.where(self.triggered & (~self.finished), boost, 0.0)\n        boost_y = 0.0\n        boost_p = 0.0\n        ascent_y = float(np.clip((ry - 0.5) / 2.5, 0.0, 1.0))\n        closing_fast_y = max(float(speed[1]), vy) - ry\n        closing_y = vy - ry\n        if locked[0] and opened[1] and valid[1] and base_valid[0] and base_valid[1] and base[0] > 0.0 and base[1] == 0.0:\n            # Tiny moving-ascent trim; no integral or late charging pulse.\n            speed_deficit = float(np.clip((-closing_fast_y - 0.5) / 3.0, 0.0, 1.0))\n            prediction_margin = float(np.clip((ey - 0.55 * max(closing_fast_y, 0.0) - 2.0) / 4.0, 0.0, 1.0))\n            moving = float(np.clip((min(float(speed[1]), vy) - 2.0) / 2.0, 0.0, 1.0))\n            trim_y = 6.0 * ascent_y * speed_deficit * prediction_margin * moving\n            boost_y = min(float(boost[1]) + trim_y, max(0.0, 2250.0 - float(base[0])))\n        if locked[2] and opened[3] and valid[2] and base_valid[2] and base_valid[3] and base[2] > 0.0 and base[3] == 0.0:\n            boost_p = min(float(boost[2]), max(0.0, 2250.0 - float(base[2])))\n\n        # Retain the accepted Y ascent, hold and return braking.\n        return_y = float(np.clip((-ry - 1.0) / 5.0, 0.0, 1.0))\n        hold_y = 1.0 - ascent_y - return_y\n        approach_fast_y = float(np.clip((closing_fast_y - 2.0) / 6.0, 0.0, 1.0))\n        approach_y = float(np.clip((closing_y - 2.0) / 6.0, 0.0, 1.0))\n        excess_y = float(np.clip((-ey - 1.0) / 3.0, 0.0, 1.0))\n        rise_brake = 30.0 * max(-ey + 0.55 * closing_fast_y - 1.0, 0.0) * max(approach_fast_y, excess_y)\n        hold_brake = 30.0 * max(-ey + 0.35 * closing_y - 1.0, 0.0) * max(approach_y, excess_y)\n        return_brake = 30.0 * max(-ey + 0.55 * closing_y - 1.0, 0.0)\n        brake_y = ascent_y * rise_brake + hold_y * hold_brake + return_y * return_brake\n        if locked[0] and valid[1]:\n            target[0] = boost_y - min(float(base[0]), brake_y)\n\n        # Retain phi positive-side braking.\n        closing_p = vp - rp\n        near_upper = float(np.clip((4.0 - ep) / 4.0, 0.0, 1.0))\n        upper_excess = max(-ep - 1.2, 0.0)\n        upper_prediction = max(-ep + 0.25 * closing_p - 1.2, 0.0)\n        if locked[2] and valid[2]:\n            target[2] = boost_p - min(float(base[2]), 18.0 * max(upper_excess, near_upper * upper_prediction))\n\n        ascent_p = float(np.clip((rp - 0.5) / 2.5, 0.0, 1.0))\n        release_gate = float(np.clip((ep + 0.5) / 1.0, 0.0, 1.0))\n        early_release = min(300.0, float(base[3])) * ascent_p * release_gate\n        upper_region = float(np.clip((float(reference[2]) - 10.0) / 10.0, 0.0, 1.0))\n        slow_reference = float(np.clip((3.0 - abs(rp)) / 2.5, 0.0, 1.0))\n        no_large_excess = float(np.clip((ep + 3.0) / 2.0, 0.0, 1.0))\n        dwell_release = float(base[3]) * upper_region * slow_reference * no_large_excess\n        lower_deficit = max(ep - 1.2, 0.0)\n        near_lower = float(np.clip((ep + 4.0) / 4.0, 0.0, 1.0))\n        # Apply the extra prediction only during commanded descent.\n        descent_weight = float(np.clip((-rp - 0.5) / 2.5, 0.0, 1.0))\n        prediction_time = 0.25 + 0.10 * descent_weight\n        descent_gain = 24.0 + 2.0 * descent_weight\n        lower_prediction = max(ep - prediction_time * closing_p - 1.2, 0.0)\n        descent_brake = descent_gain * max(lower_deficit, near_lower * lower_prediction)\n        if locked[3] and valid[2]:\n            target[3] = -min(float(base[3]), max(early_release, dwell_release, descent_brake))\n\n        positive_limit = np.minimum(self.output_limit_mv, np.array([30.0, 0.0, 25.0, 0.0, 0.0, 0.0]))\n        target = np.where(locked, np.clip(target, -self.output_limit_mv, positive_limit), 0.0)\n        step = self.output_slew_mv_per_s * dt\n        result = self.output + np.clip(target - self.output, -step, step)\n        positive_rise = np.minimum(self.output_slew_mv_per_s, np.array([100.0, 0.0, 100.0, 700.0, 0.0, 0.0])) * dt\n        result = np.minimum(result, np.maximum(self.output, 0.0) + positive_rise)\n        result = np.clip(result, -self.output_limit_mv, positive_limit)\n        # Unlock reset is the mandated exception to residual slew.\n        # Fixed planner must provide pair-exclusive base drive and break-before-make.\n        self.output = np.where(locked, result, 0.0)\n        return self.output + np.zeros(6)",
+  "canary_active": false,
+  "baseline_mse_deg2": 33.102153471249814,
+  "last_valid_mse_deg2": 33.102153471249814,
+  "last_candidate_digest": "ee653061bc65450c330deae566e3f632062e9368960e6fe5374ba5ec25f17208",
+  "last_design": {
+    "generation": 6,
+    "rationale": "Select Y and phi from their approximately 33-degree and 30-degree reference excursions; X residuals remain zero. Y now dominates the regression. This candidate reduces unnecessary Y unloading and confines phi descent braking to excessive downward speed. It is a conservative experimental revision, not a demonstrated solution to the startup delay or the recorded execution-chain conflict.",
+    "design_strategy": "Use bounded subtraction with 80 ms velocity filtering and continuous phase gates. Preserve Y ascent prediction, halve hold braking, and reduce return unloading gain from 30 to 12 mV/degree and prediction from 0.55 to 0.25 s because the latest return accelerates excessively. For phi, restore 600 mV subtraction capacity but gate descent prediction by excessive downward speed, releasing braking when the reference catches up. Do not add pressure thresholds, integration, timed replay, or antagonist activation. Nonpositive residuals preserve electrical headroom and exclusivity of exclusive MPC commands. Manual contract audit: exactly one class and three methods, permitted calls only, no imports or loops, finite limits and slew, unlocked output reset, X identically zero. No files edited or robot run. Actual break-before-make cannot be certified: the supplied downstream assist drives both phi channels, and this interface cannot cancel actuation injected after compute. Arbitrary conflicting MPC commands also cannot be repaired universally while preserving bounded residual slew and zero unlocked outputs.",
+    "expected_effect": "Next-lap experimental targets: phi 9.45–10.55 s RMSE below 9 degrees, sampled peak descent speed magnitude below 28 degrees/s, and no increase in 11.15–12.30 s error. On the latest 10.55 s measurements the V3 braking target is zero because measured descent is slower than reference; at 9.55 s it is negative. Y return unloading should be materially smaller near 12.45 s, targeting return speed magnitude below 38 degrees/s and maximum 50 ms position jump below 3 degrees. Preserve Y ascent hotspots at or below 13.20/9.51 degrees and reduce subsequent hold error. Aggregate target is below 55.766 deg²; acceptance still requires below 33.102 deg². This subtraction-only candidate does not predict improved Y startup delay. Verify original requests separately from final actuation and repeat at least two comparable laps; downstream override may prevent the predicted phi effect.",
+    "failure_analysis": "Relative to generation 5, squared-axis RMSE changes are approximately Y +18.12, phi +4.61, X -0.066 deg², accounting for the +22.664 aggregate regression. Y early/later ascent hotspots deteriorated from 7.815/7.389 to 13.201/9.512 degrees, missing the previous 8-degree targets. At 2.25 s Y remains stationary with 13.119 degrees error and zero compensation; at 2.65 s error reaches 16.306 degrees before rapid catch-up. This supports inadequate motion establishment, not excessive early braking. Removing the small charging opportunity coincided with deterioration, but historical variability and downstream changes prevent causal attribution. Restoring positive pulses cannot provide unconditional instantaneous headroom and residual slew guarantees under unspecified MPC jumps, so this candidate explicitly leaves that limitation unresolved. Phi ascent improved versus the immediately preceding rejected lap, 9.548 to 7.383 degrees, while descent worsened from 8.812 to 9.445; a blanket gain increase is unsupported. At 9.55 s velocity is -31.059 versus -7.641 degrees/s reference, but at 10.55 s it is -7.323 versus -17.160. The previous descent RMSE and jump targets failed; maximum jump was 3.975 degrees. At 8.65 s final V2/V3 are simultaneously 573.07/450 mV despite V3 base zero; at 9.05 s reported V2 compensation is +488.72 mV, impossible for the tested nonpositive 180 mV-bounded output. These are not raw controller requests. Consequently, the trace cannot establish that the previous V3 braking reached the actuator. Separately, Y reaches -42.739 degrees/s at 13.05 s versus -29.725 reference, supporting gentler return unloading rather than stronger braking everywhere.",
+    "created_by": "Codex",
+    "implementation_kind": "python_class",
+    "source_sha256": "ef0e29e41a234fbc47be90af0d4ead2ac599322f4d947dd7642cf2791a41ea3e",
+    "kp_matrix": null,
+    "kd_matrix": null,
+    "ki_matrix": null,
+    "integral_limit_deg_s": null,
+    "output_limit_mv": [
+      900.0,
+      0.0,
+      180.0,
+      600.0,
+      0.0,
+      0.0
+    ],
+    "output_slew_mv_per_s": [
+      900.0,
+      0.0,
+      350.0,
+      700.0,
+      0.0,
+      0.0
+    ]
+  },
+  "history": [
+    {
+      "time": "2026-09-27T00:53:08",
+      "mse_deg2": 84.75057886480313,
+      "generation": 0,
+      "valid": true,
+      "accepted": null,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T00:54:01",
+      "mse_deg2": 80.02856558618839,
+      "generation": 0,
+      "valid": true,
+      "accepted": null,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T00:55:45",
+      "mse_deg2": 76.04691129073439,
+      "generation": 0,
+      "valid": true,
+      "accepted": null,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T00:57:34",
+      "mse_deg2": 91.59618365552535,
+      "generation": 0,
+      "valid": true,
+      "accepted": false,
+      "rolled_back": true
+    },
+    {
+      "time": "2026-09-27T00:59:41",
+      "mse_deg2": 108.42827545959236,
+      "generation": 0,
+      "valid": true,
+      "accepted": null,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T01:01:54",
+      "mse_deg2": 510.6760905837985,
+      "generation": 0,
+      "valid": true,
+      "accepted": false,
+      "rolled_back": true
+    },
+    {
+      "time": "2026-09-27T01:04:04",
+      "mse_deg2": 84.27190056803529,
+      "generation": 1,
+      "valid": true,
+      "accepted": true,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T01:06:06",
+      "mse_deg2": 105.52748306586314,
+      "generation": 1,
+      "valid": true,
+      "accepted": false,
+      "rolled_back": true
+    },
+    {
+      "time": "2026-09-27T01:08:06",
+      "mse_deg2": 76.83872048904632,
+      "generation": 2,
+      "valid": true,
+      "accepted": true,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T01:09:50",
+      "mse_deg2": 61.01551330953815,
+      "generation": 3,
+      "valid": true,
+      "accepted": true,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T01:11:53",
+      "mse_deg2": 41.32978300453713,
+      "generation": 4,
+      "valid": true,
+      "accepted": true,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T01:14:37",
+      "mse_deg2": 33.102153471249814,
+      "generation": 5,
+      "valid": true,
+      "accepted": true,
+      "rolled_back": false
+    },
+    {
+      "time": "2026-09-27T01:17:16",
+      "mse_deg2": 40.84468035386147,
+      "generation": 5,
+      "valid": true,
+      "accepted": false,
+      "rolled_back": true
+    },
+    {
+      "time": "2026-09-27T01:19:22",
+      "mse_deg2": 55.766216254012406,
+      "generation": 5,
+      "valid": true,
+      "accepted": false,
+      "rolled_back": true
+    },
+    {
+      "time": "2026-09-27T01:21:14",
+      "mse_deg2": 66.63020250260557,
+      "generation": 5,
+      "valid": true,
+      "accepted": false,
+      "rolled_back": true
+    }
+  ],
+  "design_memory": [
+    {
+      "time": "2026-09-27T01:11:53",
+      "outcome": "accepted",
+      "generation_tested": 4,
+      "generation_after": 4,
+      "valid_lap": true,
+      "hypothesis": "按你的要求，这轮直接针对Y和phi的起动提前：在参考刚开始上升、实测压力和速度尚未建立时，加入很小的一次性充气补偿。Y、phi分别最多30、25mV，不采用报告建议的约600mV追加量。保留已经有效的预测制动和回程卸载，X补偿恒为零。",
+      "design_strategy": "参考上升速度首次超过2deg/s即启动0.60s窗口，不等待大误差，也不因未获得锁而推迟窗口。补偿随窗口、压力和运动建立连续衰减；压力达到18kPa、实测上升速度达到2deg/s或追上参考后，本圈不再补发。10–18kPa仅是本次试验的充气退出区间，不是解锁阈值，也不是已辨识的起动压力。只有本侧锁定、对侧明确打开、MPC本侧已有驱动且对侧无驱动时才生成正目标；保留250mV目标余量。正向建立速度100mV/s，撤除沿用原残差限速。Y和phi原有制动基本保持不变。人工自审：一个类、三个指定方法、无imports/循环/辅助方法，使用允许的NumPy调用；输出有限、限幅、限速，解锁立即清零。未编辑文件或运行机器人。",
+      "expected_effect": "下一圈待验证：Y连续三个50ms样本速度超过2deg/s的起点提前至少0.10s，phi提前至少0.05s；需要原始283样本确认，不能用相关滞后替代。Y在2.35–3.50s的RMSE目标低于14deg，phi在5.90–7.05s低于10.5deg；总MSE低于61.016deg²。保持phi早下降RMSE不高于7.74deg、Y最终平均误差绝对值不超过3deg，最大50ms位置跳变低于3deg，且无重复上冲。这些是小幅探索的验收目标，不是保证；正补偿可能被外部限速吸收。至少两圈同条件验证重复性。",
+      "designer_failure_analysis": "上一轮总MSE由76.839降至61.016，按轴平方RMSE分解约为Y改善5.58、phi改善10.83、X恶化0.59deg²。Y最终平均误差−1.712deg和phi早下降RMSE7.737deg达到上一轮目标；9.1s的phi从23.55改善到28.778deg，接近29.935deg参考。最大跳变3.072deg仍未达到3deg目标。起动问题没有解决：Y到2.35s仍静止、误差13.808deg且补偿为零；phi在6.1s仍近静止、误差8.967deg，之后快速追赶。这不是需要增强全程位置增益的证据。历史120/80mV脉冲曾伴随Y超前和phi恶化，因此本轮采用更小幅值、更短窗口及压力/速度一次性退出，禁止在大误差阶段重启。归因仍受执行链影响：8.65s的V2/V3总电压571/420mV同时为正，9.05s的V2补偿+469mV不可能来自所列非正且180mV限幅源码。上平台改善不能全部归功于原V3抑制，因为当时V3基础命令为零。此类无法约束返回后的额外注入；实际机器人互斥仍不满足报告中的硬规则。代码在题设的互斥MPC及先归零解锁再换侧契约下不新增对抗驱动；任意基础命令突跳时，严格残差限速、瞬时余量跟随及无条件互斥无法同时由这个接口保证。",
+      "parameter_changes": [],
+      "implementation_kind": "python_class",
+      "source_sha256": "480142719f577386f8ecad5e8c81b0d4467cfdc9df25edb00dcea725fcb5d72b",
+      "measured_mse_deg2": 41.329783,
+      "comparison_mse_deg2": 61.015513,
+      "mse_delta_deg2": -19.68573,
+      "mse_ratio": 0.677365,
+      "axis_rmse_deg": {
+        "X": 2.088723,
+        "Y": 4.528287,
+        "phi": 4.057294
+      },
+      "axis_rmse_change_vs_previous_stable_deg": {
+        "X": 0.005828,
+        "Y": -1.605233,
+        "phi": -0.308137
+      },
+      "phase_error_hotspots": [
+        {
+          "axis": "X",
+          "phase_bin": 7,
+          "phase_fraction": [
+            0.583,
+            0.6678
+          ],
+          "time_s": [
+            8.25,
+            9.4
+          ],
+          "reference_pose_mean_deg": [
+            -0.1426,
+            32.8457,
+            29.8848
+          ],
+          "response_pose_mean_deg": [
+            -4.6324,
+            30.5095,
+            28.6398
+          ],
+          "rmse_deg": 4.490264,
+          "mean_signed_error_deg": 4.489753,
+          "max_abs_error_deg": 4.602283
+        },
+        {
+          "axis": "X",
+          "phase_bin": 6,
+          "phase_fraction": [
+            0.5018,
+            0.583
+          ],
+          "time_s": [
+            7.1,
+            8.2
+          ],
+          "reference_pose_mean_deg": [
+            -0.1431,
+            32.7734,
+            29.1463
+          ],
+          "response_pose_mean_deg": [
+            -4.2461,
+            30.936,
+            27.1224
+          ],
+          "rmse_deg": 4.114242,
+          "mean_signed_error_deg": 4.102991,
+          "max_abs_error_deg": 4.36045
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 2,
+          "phase_fraction": [
+            0.1661,
+            0.2509
+          ],
+          "time_s": [
+            2.35,
+            3.5
+          ],
+          "reference_pose_mean_deg": [
+            -0.1626,
+            19.6192,
+            0.026
+          ],
+          "response_pose_mean_deg": [
+            -0.0258,
+            10.986,
+            -0.7695
+          ],
+          "rmse_deg": 8.641952,
+          "mean_signed_error_deg": 8.63317,
+          "max_abs_error_deg": 9.530689
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 3,
+          "phase_fraction": [
+            0.2509,
+            0.3322
+          ],
+          "time_s": [
+            3.55,
+            4.65
+          ],
+          "reference_pose_mean_deg": [
+            -0.236,
+            28.4758,
+            0.0378
+          ],
+          "response_pose_mean_deg": [
+            0.4046,
+            20.0342,
+            -0.7615
+          ],
+          "rmse_deg": 8.486452,
+          "mean_signed_error_deg": 8.441546,
+          "max_abs_error_deg": 9.973944
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 5,
+          "phase_fraction": [
+            0.417,
+            0.5018
+          ],
+          "time_s": [
+            5.9,
+            7.05
+          ],
+          "reference_pose_mean_deg": [
+            -0.1934,
+            31.5438,
+            15.4518
+          ],
+          "response_pose_mean_deg": [
+            0.0426,
+            29.9866,
+            5.9072
+          ],
+          "rmse_deg": 9.882999,
+          "mean_signed_error_deg": 9.54467,
+          "max_abs_error_deg": 13.317783
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 8,
+          "phase_fraction": [
+            0.6678,
+            0.7491
+          ],
+          "time_s": [
+            9.45,
+            10.55
+          ],
+          "reference_pose_mean_deg": [
+            -0.3057,
+            32.5805,
+            22.7246
+          ],
+          "response_pose_mean_deg": [
+            -3.4657,
+            30.0443,
+            15.5778
+          ],
+          "rmse_deg": 7.448886,
+          "mean_signed_error_deg": 7.146883,
+          "max_abs_error_deg": 10.07085
+        }
+      ],
+      "acceptance_limit_mse_deg2": 61.015513,
+      "audit_invalid_reasons": []
+    },
+    {
+      "time": "2026-09-27T01:14:37",
+      "outcome": "accepted",
+      "generation_tested": 5,
+      "generation_after": 5,
+      "valid_lap": true,
+      "hypothesis": "只微调Y、phi，X补偿恒为零。Y保留30mV起动窗口，仅在上升速度不足且预测仍落后时增加最多6mV；phi起动触发稍提前，幅值仍为25mV；phi下降通过稍早撤除向下驱动，让实际下降稍晚，保持原有上升制动。",
+      "design_strategy": "保留80ms速度滤波、Y预测制动和回程卸载。Y新增连续的小幅速度不足补偿，上升参考、位置余量和速度差共同门控，快速追赶时退出，不加积分。phi参考上升速度触发由2降至1deg/s，窗口仍为0.60s且不延迟补发。仅phi下降制动预测由0.25增至0.35s、增益由24增至26mV/deg，其他制动参数保持。正补偿仅在本侧锁定、对侧打开、本侧MPC已有驱动且对侧为零时建立，预留250mV目标余量；不主动换侧。已人工自审：一个类、三个指定方法、无导入/循环/辅助方法，使用允许调用，幅值与限速直接约束，解锁立即清零。未编辑文件或运行机器人。互斥依赖题设固定规划器提供互斥基础驱动及先断后通；任意基础电压突变或返回后的注入无法由本接口同时保证严格残差限速、瞬时余量及实际互斥。",
+      "expected_effect": "下一圈验收目标而非保证：Y在2.35–3.50s、3.55–4.65s的RMSE分别低于8.64、8.49deg，争取降至8.3、8.2deg；phi首次连续三个50ms样本速度超过2deg/s的时刻提前约0.05s，上升热点RMSE不高于9.883deg；phi在9.45–10.55s的RMSE争取低于7.2deg，同时避免晚段停在参考上方。总MSE争取低于41.330deg²，最大50ms角度跳变保持低于3deg，无重复上冲，Y末段平均误差绝对值不超过1deg。至少两圈同条件确认；若下游继续覆盖V3请求，下降改善可能无法实现。",
+      "designer_failure_analysis": "本轮MSE从61.016降至41.330deg²；按轴RMSE平方分解，Y约贡献17.12deg²改善、phi约2.60，X约恶化0.02。此前Y/phi上升热点、phi早下降、Y末段误差及最大跳变目标均已达到，但96个抽样点不能验证连续三原始样本的起动提前量。Y在2.35s已运动，速度8.09而参考11.25deg/s；3.70s仍落后9.97deg且补偿为零，说明剩余上升缺口不是制动过强，适合极小速度补偿。phi在5.35s已有小正补偿，6.25s仍仅0.54deg/s，6.40s才达5.93，随后快速追赶；因此仅前移起动触发，不增加追赶驱动。下降时9.50s速度−15.08而参考−6.81deg/s，9.95s落后10.07deg，支持稍提前削减向下驱动。但8.65s V2/V3总电压611.71/450mV同时为正，9.10s记录V2补偿+512.23mV也超出源码正上限25mV，明确存在下游注入或限速残留；V3平台基础命令为零时，原减法控制无法撤销该注入。不能将全部改善归因于30/25mV脉冲，也不能宣称记录中的实际互斥已满足硬规则。",
+      "parameter_changes": [],
+      "implementation_kind": "python_class",
+      "source_sha256": "d3402135b4fbd954f9e60cc49dab610c2eb61a18bb087ee4cee5ae53388dfa7f",
+      "measured_mse_deg2": 33.102153,
+      "comparison_mse_deg2": 41.329783,
+      "mse_delta_deg2": -8.22763,
+      "mse_ratio": 0.800927,
+      "axis_rmse_deg": {
+        "X": 1.905895,
+        "Y": 4.179294,
+        "phi": 3.464566
+      },
+      "axis_rmse_change_vs_previous_stable_deg": {
+        "X": -0.182828,
+        "Y": -0.348993,
+        "phi": -0.592728
+      },
+      "phase_error_hotspots": [
+        {
+          "axis": "X",
+          "phase_bin": 7,
+          "phase_fraction": [
+            0.583,
+            0.6678
+          ],
+          "time_s": [
+            8.25,
+            9.4
+          ],
+          "reference_pose_mean_deg": [
+            -0.1426,
+            32.8457,
+            29.8848
+          ],
+          "response_pose_mean_deg": [
+            -4.2191,
+            29.6731,
+            28.2549
+          ],
+          "rmse_deg": 4.077314,
+          "mean_signed_error_deg": 4.076482,
+          "max_abs_error_deg": 4.185394
+        },
+        {
+          "axis": "X",
+          "phase_bin": 6,
+          "phase_fraction": [
+            0.5018,
+            0.583
+          ],
+          "time_s": [
+            7.1,
+            8.2
+          ],
+          "reference_pose_mean_deg": [
+            -0.1431,
+            32.7734,
+            29.1463
+          ],
+          "response_pose_mean_deg": [
+            -3.7184,
+            30.1517,
+            25.7292
+          ],
+          "rmse_deg": 3.580317,
+          "mean_signed_error_deg": 3.575303,
+          "max_abs_error_deg": 3.919848
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 2,
+          "phase_fraction": [
+            0.1661,
+            0.2509
+          ],
+          "time_s": [
+            2.35,
+            3.5
+          ],
+          "reference_pose_mean_deg": [
+            -0.1626,
+            19.6192,
+            0.026
+          ],
+          "response_pose_mean_deg": [
+            0.2128,
+            11.8254,
+            -0.7785
+          ],
+          "rmse_deg": 7.814791,
+          "mean_signed_error_deg": 7.793789,
+          "max_abs_error_deg": 8.855425
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 3,
+          "phase_fraction": [
+            0.2509,
+            0.3322
+          ],
+          "time_s": [
+            3.55,
+            4.65
+          ],
+          "reference_pose_mean_deg": [
+            -0.236,
+            28.4758,
+            0.0378
+          ],
+          "response_pose_mean_deg": [
+            0.671,
+            21.108,
+            -0.7756
+          ],
+          "rmse_deg": 7.388625,
+          "mean_signed_error_deg": 7.367742,
+          "max_abs_error_deg": 8.100098
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 8,
+          "phase_fraction": [
+            0.6678,
+            0.7491
+          ],
+          "time_s": [
+            9.45,
+            10.55
+          ],
+          "reference_pose_mean_deg": [
+            -0.3057,
+            32.5805,
+            22.7246
+          ],
+          "response_pose_mean_deg": [
+            -3.0767,
+            30.026,
+            15.0206
+          ],
+          "rmse_deg": 7.899874,
+          "mean_signed_error_deg": 7.704042,
+          "max_abs_error_deg": 9.71542
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 5,
+          "phase_fraction": [
+            0.417,
+            0.5018
+          ],
+          "time_s": [
+            5.9,
+            7.05
+          ],
+          "reference_pose_mean_deg": [
+            -0.1934,
+            31.5438,
+            15.4518
+          ],
+          "response_pose_mean_deg": [
+            -0.9295,
+            30.9372,
+            10.292
+          ],
+          "rmse_deg": 5.690725,
+          "mean_signed_error_deg": 5.159835,
+          "max_abs_error_deg": 8.281157
+        }
+      ],
+      "acceptance_limit_mse_deg2": 41.329783,
+      "audit_invalid_reasons": []
+    },
+    {
+      "time": "2026-09-27T01:17:16",
+      "outcome": "rolled_back",
+      "generation_tested": 6,
+      "generation_after": 5,
+      "valid_lap": true,
+      "hypothesis": "按你的反馈，只微调Y和phi。Y运动建立后的助推上限由6增加到8mV，不扩大起动脉冲。phi下降时确实有V3充气：9.50s总电压590mV、压力25kPa，9.80s压力26kPa，下降速度明显快于参考。本轮只在下降过快且预测将低于参考时额外削减最多15mV，避免后半段本来下降不足时继续减压。X补偿恒为零。",
+      "design_strategy": "保留30/25mV一次性起动窗口、80ms速度滤波及现有预测制动。Y新增量仅用于已运动、参考上升、速度不足和预测仍落后的阶段。phi增加连续门控的微量V3减法项，使用原始与滤波速度中下降更快的一项提前撤力；预测误差消失或实际下降慢于参考时退出，不使用压力闭环或30kPa阈值。幅值和残差限速直接执行，解锁立即清零。正目标仅在本侧锁定、对侧打开且MPC驱动互斥时建立，并留250mV目标余量。人工自审满足类、方法和调用限制；未编辑文件或运行机器人。必须明确：该接口无法约束返回后的V3注入，也无法在任意MPC突变下同时保证瞬时电气余量和严格残差限速；实际互斥仍要求固定执行链履行题设先断后通契约。当前日志违反该契约，因此本方案不能被视为对现有执行链硬规则的认证。",
+      "expected_effect": "下一圈待验证目标：Y两个上升热点RMSE由7.815/7.389降至7.7/7.3deg以下，保持起动脉冲和上升超调不增加。phi在9.35–10.00s应出现额外0至−15mV的原始V3请求，9.45–10.55s RMSE争取低于7.7deg；11.15–12.30s不额外抑制下降驱动。总MSE目标低于33.102deg²，最大50ms角度跳变低于3deg。Y末段误差不应劣于当前−2.399deg。若V3仍被外部assist覆盖，不能预期该微调降低实际压力；需分别核对原始请求与最终电压。至少两圈同条件评估重复性。",
+      "designer_failure_analysis": "上一版总MSE由41.330降至33.102，按各轴RMSE平方分解，Y约改善3.04、phi约4.46、X约0.73deg²。Y上升热点达到原目标，phi上升热点从9.883降至5.691；但phi下降热点从7.449恶化至7.900，未达到7.2目标，Y末段−2.399也未达到±1deg目标。Y在2.50s速度7.52而参考11.31deg/s、误差7.69deg，支持极小移动助推；3.55s速度已超过参考，不应持续追加。phi在9.50s速度−19.48而参考−6.81deg/s，确实下降过快；到10.55s却仅−7.24而参考−17.16，11.15s以后位置反而高于参考，所以不能全下降阶段统一减压。更关键的是8.65s V2/V3同时为618.37/450mV，9.10s V2补偿+493.75mV超过源码25mV正上限；记录明确标注default1_phi_v3_assist。前版V3非正请求被下游覆盖是下降调参未兑现的直接限制，不应误判为单纯制动增益不足。96个抽样点不能确认连续三个原始样本的起动提前指标；目前也不能把全部改善归因于补偿器。",
+      "parameter_changes": [],
+      "implementation_kind": "python_class",
+      "source_sha256": "26789793620c124c77c29437792f3def889b4be4c005b62e00bd807b430a6f61",
+      "measured_mse_deg2": 40.84468,
+      "comparison_mse_deg2": 33.102153,
+      "mse_delta_deg2": 7.742527,
+      "mse_ratio": 1.233898,
+      "axis_rmse_deg": {
+        "X": 2.191806,
+        "Y": 4.287131,
+        "phi": 4.202521
+      },
+      "axis_rmse_change_vs_previous_stable_deg": {
+        "X": 0.285911,
+        "Y": 0.107837,
+        "phi": 0.737955
+      },
+      "phase_error_hotspots": [
+        {
+          "axis": "X",
+          "phase_bin": 7,
+          "phase_fraction": [
+            0.583,
+            0.6678
+          ],
+          "time_s": [
+            8.25,
+            9.4
+          ],
+          "reference_pose_mean_deg": [
+            -0.1426,
+            32.8457,
+            29.8848
+          ],
+          "response_pose_mean_deg": [
+            -4.7549,
+            30.3857,
+            28.7974
+          ],
+          "rmse_deg": 4.612323,
+          "mean_signed_error_deg": 4.612252,
+          "max_abs_error_deg": 4.655537
+        },
+        {
+          "axis": "X",
+          "phase_bin": 6,
+          "phase_fraction": [
+            0.5018,
+            0.583
+          ],
+          "time_s": [
+            7.1,
+            8.2
+          ],
+          "reference_pose_mean_deg": [
+            -0.1431,
+            32.7734,
+            29.1463
+          ],
+          "response_pose_mean_deg": [
+            -4.601,
+            31.006,
+            27.4291
+          ],
+          "rmse_deg": 4.465647,
+          "mean_signed_error_deg": 4.457906,
+          "max_abs_error_deg": 4.611371
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 3,
+          "phase_fraction": [
+            0.2509,
+            0.3322
+          ],
+          "time_s": [
+            3.55,
+            4.65
+          ],
+          "reference_pose_mean_deg": [
+            -0.236,
+            28.4758,
+            0.0378
+          ],
+          "response_pose_mean_deg": [
+            0.6567,
+            20.7736,
+            -0.3473
+          ],
+          "rmse_deg": 7.72222,
+          "mean_signed_error_deg": 7.702178,
+          "max_abs_error_deg": 8.474361
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 2,
+          "phase_fraction": [
+            0.1661,
+            0.2509
+          ],
+          "time_s": [
+            2.35,
+            3.5
+          ],
+          "reference_pose_mean_deg": [
+            -0.1626,
+            19.6192,
+            0.026
+          ],
+          "response_pose_mean_deg": [
+            0.0197,
+            11.9654,
+            -0.5102
+          ],
+          "rmse_deg": 7.666405,
+          "mean_signed_error_deg": 7.653814,
+          "max_abs_error_deg": 8.177484
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 5,
+          "phase_fraction": [
+            0.417,
+            0.5018
+          ],
+          "time_s": [
+            5.9,
+            7.05
+          ],
+          "reference_pose_mean_deg": [
+            -0.1934,
+            31.5438,
+            15.4518
+          ],
+          "response_pose_mean_deg": [
+            -0.2399,
+            30.2564,
+            6.2391
+          ],
+          "rmse_deg": 9.548434,
+          "mean_signed_error_deg": 9.212689,
+          "max_abs_error_deg": 12.566154
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 8,
+          "phase_fraction": [
+            0.6678,
+            0.7491
+          ],
+          "time_s": [
+            9.45,
+            10.55
+          ],
+          "reference_pose_mean_deg": [
+            -0.3057,
+            32.5805,
+            22.7246
+          ],
+          "response_pose_mean_deg": [
+            -3.4998,
+            29.5801,
+            14.3671
+          ],
+          "rmse_deg": 8.81191,
+          "mean_signed_error_deg": 8.357529,
+          "max_abs_error_deg": 12.207118
+        }
+      ],
+      "acceptance_limit_mse_deg2": 33.102153,
+      "audit_invalid_reasons": []
+    },
+    {
+      "time": "2026-09-27T01:19:22",
+      "outcome": "rolled_back",
+      "generation_tested": 6,
+      "generation_after": 5,
+      "valid_lap": true,
+      "hypothesis": "phi确实需要在下降初段慢一点，但不能整段都减速：9.80s实测−32.58deg/s、参考−11.65deg/s，已经低于参考11.92deg；10.55s实测却只有−4.55deg/s、参考−17.16deg/s，随后停在参考上方。本轮选择Y和phi，重点改为phi提前撤力、预测缺口消失后及时恢复MPC驱动，X残差恒零。",
+      "design_strategy": "采用仅减法的连续预测控制，避免正残差在MPC突变时与电气余量、残差限速发生冲突。保留Y分阶段预测制动；phi下降用0.45s预测误差决定V3撤力，取消旧版位置误差与预测误差取最大值的持续制动，也取消额外15mV叠加项。原始与80ms滤波速度连续混合，V3撤力上限350mV、限速700mV/s；不使用积分、时间重放、压力阈值或主动换锁。取消起动正脉冲属于输出安全结构调整，不宣称能改善起动延迟。代码人工自审满足一个类、三个指定方法、允许调用、无循环、有限幅值及限速；解锁立即清零。非正残差在投影前保持互斥MPC输入的互斥性，不依赖投影器消除新增对抗驱动。但日志中的下游双侧驱动违反题设先断后通，现有接口无法保证这种执行链的实际互斥。",
+      "expected_effect": "条件性验收目标：原始V3请求在phi下降过快且预测将低于参考时平滑变负；按9.80s测量应趋向约−350mV，按10.55s测量应恢复趋向0，而不是继续因当前位置低于参考而制动。下一圈phi早下降热点RMSE争取从8.812降至8deg以下、峰值下降速度绝对值从32.58降至28deg/s以下，11.15–12.30s停滞误差不增加；Y两个上升热点不超过8deg，最大50ms位置跳变低于3deg。总MSE先争取低于40.845，最终仍须低于33.102才达到原验收线。这些是待测目标，不能由离线轨迹保证；若V3请求仍被assist覆盖，不能预期本类让实际下降变慢。起动延迟和重复性需原始采样及至少两圈验证。",
+      "designer_failure_analysis": "相对稳定圈，总MSE增加7.743deg²；按轴RMSE平方分解，phi约贡献5.658、Y约0.913、X约1.172，主要问题是phi。phi上升热点5.691→9.548，早下降7.900→8.812，均未达预期；Y早上升7.815→7.666达标，但后上升7.389→7.722未达标。phi下降新增15mV不能解释此前已发生的上升恶化：5.50s起动请求已退出，6.10s速度仍仅0.144deg/s，而V2最终电压受600mV/s斜率限制；这支持响应建立不足及执行链影响，不能归因于下降增益。下降方面，8.65s V2/V3同时为578.95/450mV，9.35s同时为131.74/770mV；9.50s已下降过快，但V3最终仍680mV，记录补偿还是+33.13mV，明显不是源码要求的非正V3请求。额外撤力没有在最终驱动中得到验证。旧制动还用max(当前位置缺口,预测缺口)，因此10.55s即使参考正在追上实测，仍可能持续撤力，增加后段停滞。本轮修正这一可检验的逻辑，不把下游assist当成可由本类取消的信号。报告末段平均误差与最后单点误差不同，不能混用。",
+      "parameter_changes": [],
+      "implementation_kind": "python_class",
+      "source_sha256": "9485cb3ed3a2df2ded3452af6c5b05c55ec4d816bd6a039d55631a17b0aac62a",
+      "measured_mse_deg2": 55.766216,
+      "comparison_mse_deg2": 33.102153,
+      "mse_delta_deg2": 22.664063,
+      "mse_ratio": 1.68467,
+      "axis_rmse_deg": {
+        "X": 1.888554,
+        "Y": 5.965116,
+        "phi": 4.076392
+      },
+      "axis_rmse_change_vs_previous_stable_deg": {
+        "X": -0.017341,
+        "Y": 1.785822,
+        "phi": 0.611826
+      },
+      "phase_error_hotspots": [
+        {
+          "axis": "X",
+          "phase_bin": 7,
+          "phase_fraction": [
+            0.583,
+            0.6678
+          ],
+          "time_s": [
+            8.25,
+            9.4
+          ],
+          "reference_pose_mean_deg": [
+            -0.1426,
+            32.8457,
+            29.8848
+          ],
+          "response_pose_mean_deg": [
+            -4.0323,
+            29.1039,
+            27.7317
+          ],
+          "rmse_deg": 3.891584,
+          "mean_signed_error_deg": 3.889644,
+          "max_abs_error_deg": 4.065611
+        },
+        {
+          "axis": "X",
+          "phase_bin": 6,
+          "phase_fraction": [
+            0.5018,
+            0.583
+          ],
+          "time_s": [
+            7.1,
+            8.2
+          ],
+          "reference_pose_mean_deg": [
+            -0.1431,
+            32.7734,
+            29.1463
+          ],
+          "response_pose_mean_deg": [
+            -3.4335,
+            30.0532,
+            25.4253
+          ],
+          "rmse_deg": 3.293894,
+          "mean_signed_error_deg": 3.290345,
+          "max_abs_error_deg": 3.567102
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 2,
+          "phase_fraction": [
+            0.1661,
+            0.2509
+          ],
+          "time_s": [
+            2.35,
+            3.5
+          ],
+          "reference_pose_mean_deg": [
+            -0.1626,
+            19.6192,
+            0.026
+          ],
+          "response_pose_mean_deg": [
+            -0.0596,
+            6.5549,
+            -0.6846
+          ],
+          "rmse_deg": 13.201401,
+          "mean_signed_error_deg": 13.064273,
+          "max_abs_error_deg": 16.306065
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 3,
+          "phase_fraction": [
+            0.2509,
+            0.3322
+          ],
+          "time_s": [
+            3.55,
+            4.65
+          ],
+          "reference_pose_mean_deg": [
+            -0.236,
+            28.4758,
+            0.0378
+          ],
+          "response_pose_mean_deg": [
+            0.586,
+            19.0362,
+            -0.9322
+          ],
+          "rmse_deg": 9.511722,
+          "mean_signed_error_deg": 9.439565,
+          "max_abs_error_deg": 11.253189
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 8,
+          "phase_fraction": [
+            0.6678,
+            0.7491
+          ],
+          "time_s": [
+            9.45,
+            10.55
+          ],
+          "reference_pose_mean_deg": [
+            -0.3057,
+            32.5805,
+            22.7246
+          ],
+          "response_pose_mean_deg": [
+            -3.2715,
+            28.6512,
+            13.7128
+          ],
+          "rmse_deg": 9.445204,
+          "mean_signed_error_deg": 9.011795,
+          "max_abs_error_deg": 12.684967
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 5,
+          "phase_fraction": [
+            0.417,
+            0.5018
+          ],
+          "time_s": [
+            5.9,
+            7.05
+          ],
+          "reference_pose_mean_deg": [
+            -0.1934,
+            31.5438,
+            15.4518
+          ],
+          "response_pose_mean_deg": [
+            -0.4826,
+            30.2502,
+            8.6792
+          ],
+          "rmse_deg": 7.382862,
+          "mean_signed_error_deg": 6.772611,
+          "max_abs_error_deg": 10.673973
+        }
+      ],
+      "acceptance_limit_mse_deg2": 33.102153,
+      "audit_invalid_reasons": []
+    },
+    {
+      "time": "2026-09-27T01:21:14",
+      "outcome": "rolled_back",
+      "generation_tested": 6,
+      "generation_after": 5,
+      "valid_lap": true,
+      "hypothesis": "Select Y and phi from their approximately 33-degree and 30-degree reference excursions; X residuals remain zero. Y now dominates the regression. This candidate reduces unnecessary Y unloading and confines phi descent braking to excessive downward speed. It is a conservative experimental revision, not a demonstrated solution to the startup delay or the recorded execution-chain conflict.",
+      "design_strategy": "Use bounded subtraction with 80 ms velocity filtering and continuous phase gates. Preserve Y ascent prediction, halve hold braking, and reduce return unloading gain from 30 to 12 mV/degree and prediction from 0.55 to 0.25 s because the latest return accelerates excessively. For phi, restore 600 mV subtraction capacity but gate descent prediction by excessive downward speed, releasing braking when the reference catches up. Do not add pressure thresholds, integration, timed replay, or antagonist activation. Nonpositive residuals preserve electrical headroom and exclusivity of exclusive MPC commands. Manual contract audit: exactly one class and three methods, permitted calls only, no imports or loops, finite limits and slew, unlocked output reset, X identically zero. No files edited or robot run. Actual break-before-make cannot be certified: the supplied downstream assist drives both phi channels, and this interface cannot cancel actuation injected after compute. Arbitrary conflicting MPC",
+      "expected_effect": "Next-lap experimental targets: phi 9.45–10.55 s RMSE below 9 degrees, sampled peak descent speed magnitude below 28 degrees/s, and no increase in 11.15–12.30 s error. On the latest 10.55 s measurements the V3 braking target is zero because measured descent is slower than reference; at 9.55 s it is negative. Y return unloading should be materially smaller near 12.45 s, targeting return speed magnitude below 38 degrees/s and maximum 50 ms position jump below 3 degrees. Preserve Y ascent hotspots a",
+      "designer_failure_analysis": "Relative to generation 5, squared-axis RMSE changes are approximately Y +18.12, phi +4.61, X -0.066 deg², accounting for the +22.664 aggregate regression. Y early/later ascent hotspots deteriorated from 7.815/7.389 to 13.201/9.512 degrees, missing the previous 8-degree targets. At 2.25 s Y remains stationary with 13.119 degrees error and zero compensation; at 2.65 s error reaches 16.306 degrees before rapid catch-up. This supports inadequate motion establishment, not excessive early braking. Removing the small charging opportunity coincided with deterioration, but historical variability and downstream changes prevent causal attribution. Restoring positive pulses cannot provide unconditional instantaneous headroom and residual slew guarantees under unspecified MPC jumps, so this candidate explicitly leaves that limitation unresolved. Phi ascent improved versus the immediately preceding rejected lap, 9.548 to 7.383 degrees, while descent worsened from 8.812 to 9.445; a blanket gain incre",
+      "parameter_changes": [],
+      "implementation_kind": "python_class",
+      "source_sha256": "ef0e29e41a234fbc47be90af0d4ead2ac599322f4d947dd7642cf2791a41ea3e",
+      "measured_mse_deg2": 66.630203,
+      "comparison_mse_deg2": 33.102153,
+      "mse_delta_deg2": 33.528049,
+      "mse_ratio": 2.012866,
+      "axis_rmse_deg": {
+        "X": 2.148864,
+        "Y": 6.291063,
+        "phi": 4.736572
+      },
+      "axis_rmse_change_vs_previous_stable_deg": {
+        "X": 0.242969,
+        "Y": 2.111769,
+        "phi": 1.272006
+      },
+      "phase_error_hotspots": [
+        {
+          "axis": "X",
+          "phase_bin": 7,
+          "phase_fraction": [
+            0.583,
+            0.6678
+          ],
+          "time_s": [
+            8.25,
+            9.4
+          ],
+          "reference_pose_mean_deg": [
+            -0.1426,
+            32.8457,
+            29.8848
+          ],
+          "response_pose_mean_deg": [
+            -4.8623,
+            30.9131,
+            29.4332
+          ],
+          "rmse_deg": 4.719906,
+          "mean_signed_error_deg": 4.719698,
+          "max_abs_error_deg": 4.776393
+        },
+        {
+          "axis": "X",
+          "phase_bin": 6,
+          "phase_fraction": [
+            0.5018,
+            0.583
+          ],
+          "time_s": [
+            7.1,
+            8.2
+          ],
+          "reference_pose_mean_deg": [
+            -0.1431,
+            32.7734,
+            29.1463
+          ],
+          "response_pose_mean_deg": [
+            -4.1857,
+            31.8298,
+            26.4354
+          ],
+          "rmse_deg": 4.107016,
+          "mean_signed_error_deg": 4.042537,
+          "max_abs_error_deg": 4.60784
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 2,
+          "phase_fraction": [
+            0.1661,
+            0.2509
+          ],
+          "time_s": [
+            2.35,
+            3.5
+          ],
+          "reference_pose_mean_deg": [
+            -0.1626,
+            19.6192,
+            0.026
+          ],
+          "response_pose_mean_deg": [
+            0.1403,
+            4.6021,
+            -0.5035
+          ],
+          "rmse_deg": 15.120523,
+          "mean_signed_error_deg": 15.017127,
+          "max_abs_error_deg": 17.562457
+        },
+        {
+          "axis": "Y",
+          "phase_bin": 3,
+          "phase_fraction": [
+            0.2509,
+            0.3322
+          ],
+          "time_s": [
+            3.55,
+            4.65
+          ],
+          "reference_pose_mean_deg": [
+            -0.236,
+            28.4758,
+            0.0378
+          ],
+          "response_pose_mean_deg": [
+            0.7622,
+            19.0999,
+            -0.7944
+          ],
+          "rmse_deg": 9.441723,
+          "mean_signed_error_deg": 9.375857,
+          "max_abs_error_deg": 11.037533
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 5,
+          "phase_fraction": [
+            0.417,
+            0.5018
+          ],
+          "time_s": [
+            5.9,
+            7.05
+          ],
+          "reference_pose_mean_deg": [
+            -0.1934,
+            31.5438,
+            15.4518
+          ],
+          "response_pose_mean_deg": [
+            0.6317,
+            29.2478,
+            2.9799
+          ],
+          "rmse_deg": 12.92474,
+          "mean_signed_error_deg": 12.471881,
+          "max_abs_error_deg": 17.027913
+        },
+        {
+          "axis": "phi",
+          "phase_bin": 8,
+          "phase_fraction": [
+            0.6678,
+            0.7491
+          ],
+          "time_s": [
+            9.45,
+            10.55
+          ],
+          "reference_pose_mean_deg": [
+            -0.3057,
+            32.5805,
+            22.7246
+          ],
+          "response_pose_mean_deg": [
+            -3.5039,
+            31.4936,
+            16.8767
+          ],
+          "rmse_deg": 6.533057,
+          "mean_signed_error_deg": 5.847898,
+          "max_abs_error_deg": 9.566728
+        }
+      ],
+      "acceptance_limit_mse_deg2": 33.102153,
+      "audit_invalid_reasons": []
+    }
+  ]
+}

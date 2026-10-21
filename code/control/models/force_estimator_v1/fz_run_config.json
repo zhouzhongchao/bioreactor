@@ -1,0 +1,102 @@
+{
+  "arguments": {
+    "model": "gru",
+    "data_dir": "D:\\paper\\paper_ongoing\\tro\\output\\recordings\\fiting data\\20260923_062542_476_slow_rom_gradual\\haw60_self_attention_dataset",
+    "response_xlsx": "D:\\paper\\paper_ongoing\\tro\\output\\recordings\\fiting data\\20260923_062542_476_slow_rom_gradual\\response.xlsx",
+    "output_dir": "haw36_temporal_gru_w16_no_p25",
+    "window_size": 16,
+    "seeds": [
+      2025,
+      2026,
+      2027
+    ],
+    "batch_size": 1024,
+    "max_epochs": 80,
+    "patience": 12,
+    "learning_rate": 0.001,
+    "weight_decay": 2e-05,
+    "gradient_clip": 5.0,
+    "local_dim": 32,
+    "step_dim": 128,
+    "temporal_dim": 128,
+    "head_dim": 64,
+    "exclude_test_processes": [
+      25
+    ],
+    "fast_cudnn": false,
+    "cpu": false
+  },
+  "training_config": {
+    "batch_size": 1024,
+    "max_epochs": 80,
+    "patience": 12,
+    "learning_rate": 0.001,
+    "weight_decay": 2e-05,
+    "gradient_clip": 5.0
+  },
+  "feature_columns": [
+    "ch1_P_kPa_z",
+    "ch1_L_mm_z",
+    "ch1_d_active_mm_z",
+    "ch1_d_passive_mm_z",
+    "ch1_dP_dt_kPa_s_z",
+    "ch1_dL_dt_mm_s_z",
+    "ch2_P_kPa_z",
+    "ch2_L_mm_z",
+    "ch2_d_active_mm_z",
+    "ch2_d_passive_mm_z",
+    "ch2_dP_dt_kPa_s_z",
+    "ch2_dL_dt_mm_s_z",
+    "ch3_P_kPa_z",
+    "ch3_L_mm_z",
+    "ch3_d_active_mm_z",
+    "ch3_d_passive_mm_z",
+    "ch3_dP_dt_kPa_s_z",
+    "ch3_dL_dt_mm_s_z",
+    "ch4_P_kPa_z",
+    "ch4_L_mm_z",
+    "ch4_d_active_mm_z",
+    "ch4_d_passive_mm_z",
+    "ch4_dP_dt_kPa_s_z",
+    "ch4_dL_dt_mm_s_z",
+    "ch5_P_kPa_z",
+    "ch5_L_mm_z",
+    "ch5_d_active_mm_z",
+    "ch5_d_passive_mm_z",
+    "ch5_dP_dt_kPa_s_z",
+    "ch5_dL_dt_mm_s_z",
+    "ch6_P_kPa_z",
+    "ch6_L_mm_z",
+    "ch6_d_active_mm_z",
+    "ch6_d_passive_mm_z",
+    "ch6_dP_dt_kPa_s_z",
+    "ch6_dL_dt_mm_s_z"
+  ],
+  "channel_names": [
+    "A1+5",
+    "A2+3",
+    "A4+8",
+    "A6+7",
+    "A9",
+    "A10"
+  ],
+  "target_names": [
+    "F_X_N",
+    "F_Y_N",
+    "F_Z_N"
+  ],
+  "target_means_n": [
+    20.944289116348653,
+    -2.322681592280383,
+    2.556635896461846
+  ],
+  "target_stds_n": [
+    19.961016856537366,
+    5.085711783305314,
+    3.37308112180339
+  ],
+  "response_sheet": "控制响应",
+  "parameter_count": 249155,
+  "device": "cuda",
+  "torch_version": "1.12.1"
+}

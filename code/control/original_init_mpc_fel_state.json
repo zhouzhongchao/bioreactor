@@ -1,0 +1,222 @@
+{
+  "schema": 1,
+  "sample_dt": 0.05,
+  "generation": 1,
+  "consecutive_wins": 0,
+  "consecutive_failures": 0,
+  "rounds_seen": 9,
+  "tracking_mse_history_deg2": [
+    28.303506561601843,
+    36.72815131248317,
+    38.31525291638099,
+    51.388392318255946,
+    42.39892907069405,
+    65.44184810074435,
+    34.48444771917767,
+    20.142584039350858,
+    30.93442486309584
+  ],
+  "canary": {
+    "active": true,
+    "generation_before": 0,
+    "candidate_generation": 1,
+    "baseline_mse_deg2": 28.520485540541458
+  },
+  "history": [
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rounds_seen": 1,
+      "replay_rounds": 1,
+      "reason": "已累计1/3轮，等待三轮合并训练"
+    },
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rounds_seen": 2,
+      "replay_rounds": 2,
+      "reason": "已累计2/3轮，等待三轮合并训练"
+    },
+    {
+      "samples": 630,
+      "round_samples": 210,
+      "train_samples": 504,
+      "validation_samples": 126,
+      "trained": true,
+      "loss": 0.4383153021335602,
+      "active": {
+        "angle_mse_deg2": 0.33187752962112427,
+        "angle_rmse_deg": 0.5760881304740906,
+        "velocity_rmse_deg_s": 11.521763801574707,
+        "pressure_rmse_kpa": 3.3507134914398193,
+        "all_angle_rmse_deg": 0.4862479269504547,
+        "angle_samples": 84,
+        "pressure_samples": 125
+      },
+      "shadow_before": {
+        "angle_mse_deg2": 0.33187752962112427,
+        "angle_rmse_deg": 0.5760881304740906,
+        "velocity_rmse_deg_s": 11.521763801574707,
+        "pressure_rmse_kpa": 3.3507134914398193,
+        "all_angle_rmse_deg": 0.4862479269504547,
+        "angle_samples": 84,
+        "pressure_samples": 125
+      },
+      "shadow": {
+        "angle_mse_deg2": 0.31771060824394226,
+        "angle_rmse_deg": 0.5636582374572754,
+        "velocity_rmse_deg_s": 11.273165941238403,
+        "pressure_rmse_kpa": 3.3372790813446045,
+        "all_angle_rmse_deg": 0.4726654589176178,
+        "angle_samples": 84,
+        "pressure_samples": 125
+      },
+      "epochs": 72,
+      "consolidated": true,
+      "replay_rounds": 3,
+      "replay_epochs": 72,
+      "active_rollout_angle_rmse_deg": 5.825856807021148,
+      "shadow_rollout_angle_rmse_deg": 3.834507449820118,
+      "passed": false,
+      "consecutive_wins": 0,
+      "promoted": false,
+      "generation_before": 0,
+      "tracking_weight_mean": 2.0003225803375244,
+      "tracking_weight_max": 4.0,
+      "generation_after": 0
+    },
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rounds_seen": 4,
+      "replay_rounds": 1,
+      "reason": "已累计1/3轮，等待三轮合并训练"
+    },
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rounds_seen": 5,
+      "replay_rounds": 2,
+      "reason": "已累计2/3轮，等待三轮合并训练"
+    },
+    {
+      "samples": 630,
+      "round_samples": 210,
+      "train_samples": 504,
+      "validation_samples": 126,
+      "trained": true,
+      "loss": 0.42839205265045166,
+      "active": {
+        "angle_mse_deg2": 0.48599937558174133,
+        "angle_rmse_deg": 0.697136640548706,
+        "velocity_rmse_deg_s": 13.94273042678833,
+        "pressure_rmse_kpa": 3.3931849002838135,
+        "all_angle_rmse_deg": 0.6098551750183105,
+        "angle_samples": 83,
+        "pressure_samples": 126
+      },
+      "shadow_before": {
+        "angle_mse_deg2": 0.4529407322406769,
+        "angle_rmse_deg": 0.6730086803436279,
+        "velocity_rmse_deg_s": 13.460173606872559,
+        "pressure_rmse_kpa": 3.3474745750427246,
+        "all_angle_rmse_deg": 0.5836510062217712,
+        "angle_samples": 83,
+        "pressure_samples": 126
+      },
+      "shadow": {
+        "angle_mse_deg2": 0.4398276209831238,
+        "angle_rmse_deg": 0.663195013999939,
+        "velocity_rmse_deg_s": 13.26390027999878,
+        "pressure_rmse_kpa": 3.3218438625335693,
+        "all_angle_rmse_deg": 0.547251284122467,
+        "angle_samples": 83,
+        "pressure_samples": 126
+      },
+      "epochs": 275,
+      "consolidated": true,
+      "replay_rounds": 3,
+      "replay_epochs": 275,
+      "active_rollout_angle_rmse_deg": 6.088674926772826,
+      "shadow_rollout_angle_rmse_deg": 2.9258738901689307,
+      "passed": false,
+      "consecutive_wins": 0,
+      "promoted": false,
+      "generation_before": 0,
+      "tracking_weight_mean": 2.2377331256866455,
+      "tracking_weight_max": 4.0,
+      "generation_after": 0
+    },
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rounds_seen": 7,
+      "replay_rounds": 1,
+      "reason": "已累计1/3轮，等待三轮合并训练"
+    },
+    {
+      "samples": 210,
+      "trained": false,
+      "promoted": false,
+      "rounds_seen": 8,
+      "replay_rounds": 2,
+      "reason": "已累计2/3轮，等待三轮合并训练"
+    },
+    {
+      "samples": 630,
+      "round_samples": 210,
+      "train_samples": 504,
+      "validation_samples": 126,
+      "trained": true,
+      "loss": 0.7558668255805969,
+      "active": {
+        "angle_mse_deg2": 0.39852356910705566,
+        "angle_rmse_deg": 0.6312872171401978,
+        "velocity_rmse_deg_s": 12.625744342803955,
+        "pressure_rmse_kpa": 3.1113979816436768,
+        "all_angle_rmse_deg": 0.5273966789245605,
+        "angle_samples": 78,
+        "pressure_samples": 126
+      },
+      "shadow_before": {
+        "angle_mse_deg2": 0.27885326743125916,
+        "angle_rmse_deg": 0.52806556224823,
+        "velocity_rmse_deg_s": 10.561312437057495,
+        "pressure_rmse_kpa": 3.076765298843384,
+        "all_angle_rmse_deg": 0.43189215660095215,
+        "angle_samples": 78,
+        "pressure_samples": 126
+      },
+      "shadow": {
+        "angle_mse_deg2": 0.24915476143360138,
+        "angle_rmse_deg": 0.49915409088134766,
+        "velocity_rmse_deg_s": 9.983083009719849,
+        "pressure_rmse_kpa": 2.860628604888916,
+        "all_angle_rmse_deg": 0.40504229068756104,
+        "angle_samples": 78,
+        "pressure_samples": 126
+      },
+      "epochs": 500,
+      "consolidated": true,
+      "replay_rounds": 3,
+      "replay_epochs": 500,
+      "active_rollout_angle_rmse_deg": 7.233667463412572,
+      "shadow_rollout_angle_rmse_deg": 3.0328900454074885,
+      "passed": true,
+      "consecutive_wins": 1,
+      "promoted": true,
+      "generation_before": 0,
+      "tracking_weight_mean": 1.9422353506088257,
+      "tracking_weight_max": 4.0,
+      "provisional": true,
+      "tracking_baseline_mse_deg2": 28.520485540541458,
+      "generation_after": 1
+    }
+  ],
+  "architecture": "mlp"
+}

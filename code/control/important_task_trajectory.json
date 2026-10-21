@@ -1,0 +1,36 @@
+{
+  "schema": 1,
+  "name": "Default 1",
+  "coordinate": "GUI_X_Y_phi_deg",
+  "source_log": "logs/mpc_20260908_034421.csv",
+  "source_lap": 1,
+  "auto_hidden_return_to_zero": true,
+  "hidden_return_duration_s": 2.0,
+  "phi_reference_cycle": "The large-phi rise and return use 2.5 s each, with a 1.0 s hold at the peak (6.0 s total).",
+  "points": [
+    {
+      "q": [-0.25, 30.16, 0.04],
+      "q_raw": [-0.25, 30.16, 0.04],
+      "q_control": [-0.25, 30.16, 0.04],
+      "t": 2.0
+    },
+    {
+      "q": [-0.14, 32.85, 30.0],
+      "q_raw": [-0.14, 32.85, 30.0],
+      "q_control": [-0.25, 32.85, 30.0],
+      "t": 2.5
+    },
+    {
+      "q": [-0.14, 32.85, 30.0],
+      "q_raw": [-0.14, 32.85, 30.0],
+      "q_control": [-0.25, 32.85, 30.0],
+      "t": 1.0
+    },
+    {
+      "q": [-0.81, 31.76, 0.58],
+      "q_raw": [-0.81, 31.76, 0.58],
+      "q_control": [-0.25, 32.85, 0.58],
+      "t": 2.5
+    }
+  ]
+}

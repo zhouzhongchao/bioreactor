@@ -1,0 +1,22 @@
+{
+  "schema": 1,
+  "name": "Default 2",
+  "coordinate": "GUI_X_Y_phi_deg",
+  "auto_hidden_return_to_zero": true,
+  "hidden_return_duration_s": 2.0,
+  "description": "Y moves from zero to +30 degrees and then to -20 degrees. X and phi remain at zero.",
+  "points": [
+    {
+      "q": [0.0, 30.0, 0.0],
+      "q_raw": [0.0, 30.0, 0.0],
+      "q_control": [0.0, 30.0, 0.0],
+      "t": 2.0
+    },
+    {
+      "q": [0.0, -20.0, 0.0],
+      "q_raw": [0.0, -20.0, 0.0],
+      "q_control": [0.0, -20.0, 0.0],
+      "t": 3.0
+    }
+  ]
+}

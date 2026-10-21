@@ -1,0 +1,212 @@
+{
+  "schema_version": 3,
+  "model_version": "V6",
+  "generated_at_utc": "2026-09-11T19:28:37Z",
+  "mode": "candidate_only_offline_fit",
+  "source": "d:\\paper\\paper_ongoing\\tro\\control\\logs\\quick_health_raw_20260912_042835.csv",
+  "samples": 460,
+  "sessions": 6,
+  "calibration_definition": "direct comparison of delta_L_measured and delta_L_V6_geometry; per-session offsets are removed and no scale is fitted",
+  "quality_thresholds": {
+    "minimum_samples": 120,
+    "minimum_range_mm": 3.0,
+    "minimum_abs_kendall_tau_b": 0.6,
+    "rmse_mm": "reported without rescaling; no acceptance limit configured"
+  },
+  "immutable_contract": {
+    "valve_order": [
+      "V0=15",
+      "V1=48",
+      "V2=23",
+      "V3=67",
+      "V4=9",
+      "V5=10"
+    ],
+    "valve_physical_muscles": [
+      [
+        1,
+        5
+      ],
+      [
+        4,
+        8
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        6,
+        7
+      ],
+      [
+        9
+      ],
+      [
+        10
+      ]
+    ],
+    "antagonist_pairs": [
+      [
+        0,
+        1
+      ],
+      [
+        2,
+        3
+      ],
+      [
+        4,
+        5
+      ]
+    ],
+    "lock_lead_ms": 100.0,
+    "unlock_pressure_kpa": 30.0,
+    "unlock_threshold_scope": "unlock judgement only"
+  },
+  "channels": [
+    {
+      "valve": "V0",
+      "physical_muscles": [
+        1,
+        5
+      ],
+      "fixed_mapping_fit": {
+        "samples": 38,
+        "kendall_tau_b": 0.7905061013345468,
+        "rmse_mm": 0.2439435056809952,
+        "predicted_range_mm": 6.790382054670829,
+        "measured_range_mm": 7.049999999999983,
+        "accepted": false,
+        "reasons": [
+          "samples<120"
+        ]
+      },
+      "diagnostic_best_geometry_channel": "V0",
+      "diagnostic_best_abs_kendall_tau_b": 0.7905061013345468,
+      "diagnostic_mapping_matches_fixed": true,
+      "diagnostic_only": true
+    },
+    {
+      "valve": "V1",
+      "physical_muscles": [
+        4,
+        8
+      ],
+      "fixed_mapping_fit": {
+        "samples": 37,
+        "kendall_tau_b": 0.6285721392645086,
+        "rmse_mm": 5.271505083004832,
+        "predicted_range_mm": 20.33134188933593,
+        "measured_range_mm": 18.159999999999997,
+        "accepted": false,
+        "reasons": [
+          "samples<120"
+        ]
+      },
+      "diagnostic_best_geometry_channel": "V3",
+      "diagnostic_best_abs_kendall_tau_b": 0.86315887066466,
+      "diagnostic_mapping_matches_fixed": false,
+      "diagnostic_only": true
+    },
+    {
+      "valve": "V2",
+      "physical_muscles": [
+        2,
+        3
+      ],
+      "fixed_mapping_fit": {
+        "samples": 38,
+        "kendall_tau_b": 0.754770114775804,
+        "rmse_mm": 1.216786115248455,
+        "predicted_range_mm": 20.22195146518743,
+        "measured_range_mm": 18.849999999999966,
+        "accepted": false,
+        "reasons": [
+          "samples<120"
+        ]
+      },
+      "diagnostic_best_geometry_channel": "V4",
+      "diagnostic_best_abs_kendall_tau_b": 0.8363668839407556,
+      "diagnostic_mapping_matches_fixed": false,
+      "diagnostic_only": true
+    },
+    {
+      "valve": "V3",
+      "physical_muscles": [
+        6,
+        7
+      ],
+      "fixed_mapping_fit": {
+        "samples": 37,
+        "kendall_tau_b": 0.7091202121844642,
+        "rmse_mm": 3.338771938194596,
+        "predicted_range_mm": 12.677661051965117,
+        "measured_range_mm": 3.7450000000000045,
+        "accepted": false,
+        "reasons": [
+          "samples<120"
+        ]
+      },
+      "diagnostic_best_geometry_channel": "V4",
+      "diagnostic_best_abs_kendall_tau_b": 0.7121506404416629,
+      "diagnostic_mapping_matches_fixed": false,
+      "diagnostic_only": true
+    },
+    {
+      "valve": "V4",
+      "physical_muscles": [
+        9
+      ],
+      "fixed_mapping_fit": {
+        "samples": 37,
+        "kendall_tau_b": 0.9224103967052035,
+        "rmse_mm": 2.3415620035589337,
+        "predicted_range_mm": 34.7322661113067,
+        "measured_range_mm": 30.890000000000015,
+        "accepted": false,
+        "reasons": [
+          "samples<120"
+        ]
+      },
+      "diagnostic_best_geometry_channel": "V1",
+      "diagnostic_best_abs_kendall_tau_b": 0.9507438218599709,
+      "diagnostic_mapping_matches_fixed": false,
+      "diagnostic_only": true
+    },
+    {
+      "valve": "V5",
+      "physical_muscles": [
+        10
+      ],
+      "fixed_mapping_fit": {
+        "samples": 38,
+        "kendall_tau_b": 0.9625827975875706,
+        "rmse_mm": 1.348044932969114,
+        "predicted_range_mm": 31.69755553078508,
+        "measured_range_mm": 31.350000000000023,
+        "accepted": false,
+        "reasons": [
+          "samples<120"
+        ]
+      },
+      "diagnostic_best_geometry_channel": "V5",
+      "diagnostic_best_abs_kendall_tau_b": 0.9625827975875706,
+      "diagnostic_mapping_matches_fixed": true,
+      "diagnostic_only": true
+    }
+  ],
+  "fixed_mapping_quality_passed": false,
+  "mapping_diagnostic_identity": false,
+  "mapping_diagnostic_is_quality_gate": false,
+  "ready_to_apply": false,
+  "application_state": "candidate_not_applied",
+  "notes": [
+    "The alternative-channel result is diagnostic only and never changes the six-channel map.",
+    "Alternative-channel ranking is not an acceptance gate because a single-axis trial can make several geometry channels monotonic together.",
+    "Kendall tau-b measures concordant versus discordant value ordering and corrects for ties.",
+    "RMSE is the direct zero-aligned length error in mm; no fitted scale is used.",
+    "RMSE is reported for review but has no automatic pass threshold until one is specified."
+  ],
+  "mount": "ry-"
+}

@@ -1,0 +1,72 @@
+{
+  "schema": 1,
+  "kind": "pure_data_neural_state_space",
+  "sample_dt": 0.05,
+  "created": "2026-09-07 02:07:32",
+  "source_glob": "D:\\paper\\paper_ongoing\\tro\\control\\logs\\pure_mpc_data\\pure_mpc_*.csv",
+  "source_files": [
+    "pure_mpc_20260906_020046.csv",
+    "pure_mpc_20260906_020309.csv",
+    "pure_mpc_20260906_020657.csv",
+    "pure_mpc_20260906_021409.csv",
+    "pure_mpc_20260906_021453.csv",
+    "pure_mpc_20260906_021537.csv",
+    "pure_mpc_20260906_021806.csv",
+    "pure_mpc_20260906_021850.csv",
+    "pure_mpc_20260906_021928.csv",
+    "pure_mpc_20260906_022055.csv"
+  ],
+  "source_sha256": "af6a6a841b69d6923517b68b00da5f32d66364f9113144bb193bdb85c9fafedd",
+  "source_file_count": 10,
+  "source_block_count": 89,
+  "closed_loop_supplement_files": [
+    "mpc_20260907_015819.csv",
+    "mpc_20260907_020038.csv",
+    "mpc_20260907_020053.csv"
+  ],
+  "closed_loop_supplement_blocks": 0,
+  "training_samples": 8233,
+  "validation_files": [
+    "pure_mpc_20260906_021928.csv",
+    "pure_mpc_20260906_022055.csv"
+  ],
+  "validation_metrics": {
+    "one_step_angle_rmse_deg": 0.42834466193507414,
+    "one_step_pressure_rmse_kpa": 3.047001136711968,
+    "block_rollout_angle_rmse_deg": 15.901918508016827,
+    "block_rollout_pressure_rmse_kpa": 8.04188492500189
+  },
+  "selected_epoch": 32,
+  "input_state": [
+    "q1_rad",
+    "q2_rad",
+    "q3_rad",
+    "dq1_per_tick",
+    "dq2_per_tick",
+    "dq3_per_tick",
+    "P0_kpa",
+    "P1_kpa",
+    "P2_kpa",
+    "P3_kpa",
+    "P4_kpa",
+    "P5_kpa"
+  ],
+  "input_control": [
+    "u_actual0_mv",
+    "u_actual1_mv",
+    "u_actual2_mv",
+    "u_actual3_mv",
+    "u_actual4_mv",
+    "u_actual5_mv"
+  ],
+  "network": "18-96-96-64-9 SiLU acceleration/pressure residual dynamics",
+  "rest_pressure_kpa": [
+    2.0141985416412354,
+    2.641113042831421,
+    2.026566982269287,
+    2.0400915145874023,
+    2.176088571548462,
+    2.0091118812561035
+  ],
+  "uses_physics_model": false
+}

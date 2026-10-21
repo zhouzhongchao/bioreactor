@@ -1,0 +1,6 @@
+# Only application source and the two root launchers belong in this repository.
+/*
+!/.gitignore
+!/code/
+!/qt_gui.py
+!/Start_Bioreactor.bat

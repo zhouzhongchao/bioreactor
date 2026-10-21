@@ -1,0 +1,33 @@
+{
+  "schema": 1,
+  "name": "Default 3",
+  "coordinate": "GUI_X_Y_phi_deg",
+  "auto_hidden_return_to_zero": false,
+  "description": "Y first moves from zero to +40 degrees. X then moves to -10 degrees and returns to zero while Y remains at +40 degrees. The trajectory then returns explicitly to [0,0,0] before all channels vent. Phi remains at zero.",
+  "points": [
+    {
+      "q": [0.0, 40.0, 0.0],
+      "q_raw": [0.0, 40.0, 0.0],
+      "q_control": [0.0, 40.0, 0.0],
+      "t": 2.0
+    },
+    {
+      "q": [-10.0, 40.0, 0.0],
+      "q_raw": [-10.0, 40.0, 0.0],
+      "q_control": [-10.0, 40.0, 0.0],
+      "t": 2.0
+    },
+    {
+      "q": [0.0, 40.0, 0.0],
+      "q_raw": [0.0, 40.0, 0.0],
+      "q_control": [0.0, 40.0, 0.0],
+      "t": 2.0
+    },
+    {
+      "q": [0.0, 0.0, 0.0],
+      "q_raw": [0.0, 0.0, 0.0],
+      "q_control": [0.0, 0.0, 0.0],
+      "t": 2.0
+    }
+  ]
+}
