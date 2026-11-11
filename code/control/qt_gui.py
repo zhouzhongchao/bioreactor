@@ -249,8 +249,11 @@ class SerialBridge(QtCore.QObject):
             "TRO", "PAMShoulder").value("forcePredictionMode", "fusion"))
         self._force_prediction_mode = (
             "separate" if saved_prediction_mode == "separate" else "fusion")
+        # Prediction only needs GIGA frames (pressure/length/encoders); Nano25 is
+        # independent.  It runs from launch and the GUI button can stop/restart it.
+        self._force_prediction_enabled = True
         self._force_prediction_latest = {
-            "state": "waiting",
+            "state": "waiting", "enabled": True,
             "force_xyz_n": [0.0, 0.0, 0.0],
             "hz": 0.0,
             "latency_ms": 0.0,
@@ -366,18 +369,40 @@ class SerialBridge(QtCore.QObject):
                 self._force_prediction_queue.get_nowait()
             except queue.Empty:
                 break
+        enabled = self._force_prediction_enabled
         return self._emit_force_prediction({
-            "state": "waiting", "force_xyz_n": [0.0, 0.0, 0.0],
+            "state": "waiting" if enabled else "stopped", "enabled": enabled,
+            "force_xyz_n": [0.0, 0.0, 0.0],
             "hz": 0.0, "latency_ms": 0.0,
             "history_samples": 0,
             "window_size": 16 if self._force_prediction_mode == "separate" else 1,
             "prediction_mode": self._force_prediction_mode,
-            "message": message or "Prediction zero reset; waiting for the next valid frame.",
+            "message": message or ("Prediction zero reset; waiting for the next valid frame."
+                                   if enabled else "Force prediction is stopped."),
         })
 
     @QtCore.pyqtSlot(result=str)
     def resetForcePrediction(self):
         return self._reset_force_prediction_state()
+
+    @QtCore.pyqtSlot(bool, result=str)
+    def setForcePredictionEnabled(self, enabled):
+        """Start or stop the monitoring-only force prediction (Nano25 not required)."""
+        enabled = bool(enabled)
+        with self._force_prediction_lock:
+            self._force_prediction_enabled = enabled
+            process = None if enabled else self._force_prediction_process
+        # A new reset generation also clears an earlier worker failure, so Start
+        # always retries; the worker (re)loads on the next valid GIGA frame.
+        result = self._reset_force_prediction_state(
+            "Prediction started; waiting for GIGA pressure/length/encoder data (Nano25 not required)."
+            if enabled else "Force prediction stopped.")
+        if process is not None and process.poll() is None:
+            try:
+                process.terminate()
+            except Exception:
+                pass
+        return result
 
     FORCE_RECORD_HEADERS = (
         "force_time_s",
@@ -658,6 +683,12 @@ class SerialBridge(QtCore.QObject):
                 generation = int(sample.get("reset_generation", 0))
                 if failed_generation == generation:
                     continue
+                with self._force_prediction_lock:
+                    stale = generation != self._force_prediction_reset_generation
+                if stale:
+                    # Reset/stop happened after this sample was queued; do not
+                    # (re)load the model for it.
+                    continue
                 try:
                     if process is None or process.poll() is not None:
                         self._emit_force_prediction({
@@ -746,6 +777,8 @@ class SerialBridge(QtCore.QObject):
         self._force_prediction_thread = None
 
     def _force_prediction_on_frame(self, frame):
+        if not self._force_prediction_enabled:
+            return
         now = float(frame.get("wall", time.time()))
         if now-self._force_prediction_last_submit_wall < 0.045:
             return
@@ -2128,17 +2161,17 @@ class SerialBridge(QtCore.QObject):
             # 这里核对六路电压后原子改写成 M<6lock>;<6uact>；PI/开环不受影响。
             cmd = txt.strip()
             # 六路手动压力测试由宿主直接维持唯一的 O-stream；拒绝页面中迟到的
-            # 轨迹/MPC/单路命令覆盖它。s 急停仍在下方正常生效。
+            # 轨迹/MPC/单路/C共收缩命令覆盖它。s 急停仍在下方正常生效。
             if (self._manual_pressure_test is not None and cmd and
-                    cmd[0].upper() in ("W", "O", "C", "M", "V")):
+                    cmd[0].upper() in ("W", "O", "M", "V", "C")):
                 return False
             if (self._reachability_test is not None and cmd and
-                    cmd[0].upper() in ("W", "O", "C", "M", "V")):
+                    cmd[0].upper() in ("W", "O", "M", "V", "C")):
                 return False
             # 联合 DataModel/V6 辨识同样由宿主独占串口；采集期间只允许其
             # 内部扫描序列和用户急停，避免页面迟到命令污染同一批辨识数据。
             if (self._dm_ident is not None and cmd and
-                    cmd[0].upper() in ("W", "O", "C", "M", "V")):
+                    cmd[0].upper() in ("W", "O", "M", "V", "C")):
                 return False
             if cmd.startswith("W"):
                 try:
@@ -2165,13 +2198,21 @@ class SerialBridge(QtCore.QObject):
                     safe_locks = ["1" if int(float(v)) else "0" for v in locks]
                     safe_vals = [str(int(np.clip(float(v), 0, limit))) for v in vals]
                     txt = cmd[0] + ",".join(safe_locks) + ";" + ",".join(safe_vals) + "\n"
-            elif cmd.startswith(("W", "O", "C")):
+            elif cmd.startswith(("W", "O")):
                 vals = cmd[1:].split(",")
                 if len(vals) == 6:
-                    limit = (OPEN_LOOP_MAX_OUTPUT_MV if cmd.startswith(("O", "C"))
+                    limit = (OPEN_LOOP_MAX_OUTPUT_MV if cmd.startswith("O")
                              else configured_max_output_mv())
                     txt = cmd[0] + ",".join(str(int(np.clip(float(v), 0, limit)))
                                              for v in vals) + "\n"
+            elif cmd.startswith("C"):
+                # C 是固件的共收缩流（Mode 5）：拮抗对可同时充气，因此与 O 一样
+                # 逐路限幅到开环上限；不是六路数值就整条拒发，不把未限幅值交给固件。
+                vals = cmd[1:].split(",")
+                if len(vals) != 6:
+                    return False
+                txt = "C" + ",".join(str(int(np.clip(float(v), 0, OPEN_LOOP_MAX_OUTPUT_MV)))
+                                     for v in vals) + "\n"
             elif cmd.startswith("V") and "," in cmd:
                 head, val = cmd.split(",", 1)
                 txt = f"{head},{int(np.clip(float(val), 0, configured_max_output_mv()))}\n"
@@ -6533,14 +6574,14 @@ def main():
               driveEnabled:'姿态联动已开启；归零后当前姿态立即显示为 (0,0,0)。',
               driveDisabled:'姿态联动已关闭。', zeroed:'已归零：当前传感器姿态 = 机械零位 (0,0,0)，姿态联动已开启。',
               muscleParameters:'肌肉参数', muscleParametersHelp:'20路编码器测得的肌肉长度与六路实时压力',
-              nano25Title:'Nano25', forcePredictionHide:'隐藏预测力', forcePredictionShow:'显示预测力', nano25Start:'启动 Nano25', nano25Stop:'停止 Nano25', nano25Starting:'启动中…',
+              nano25Title:'Nano25', forcePredictionStop:'停止预测', forcePredictionStart:'启动预测', nano25Start:'启动 Nano25', nano25Stop:'停止 Nano25', nano25Starting:'启动中…',
               nano25Zeroing:'归零中…', nano25Stopping:'停止中…', nano25Stopped:'未启动', nano25Error:'采集故障',
               nano25Help:'可选传感器；未启动也可执行轨迹。启动前保持无载荷，点击后自动完成约5秒归零。力按GUI的Y、Z、X顺序显示，并已统一反向。',
               nano25ControlRequired:'控制中持续采集', forcePredictionInline:'预测',
               forcePredictionTitle:'模型预测力（20 Hz）', forcePredictionReset:'重置预测零点',
               forcePredictionMode:'预测方式', forcePredictionFusion:'Fusion单网络',
               forcePredictionSeparate:'三轴分开模型',
-              forcePredictionWaiting:'等待六路压力和长度数据', forcePredictionLoading:'正在加载预测模型…',
+              forcePredictionWaiting:'等待GIGA六路压力和长度数据（不需要Nano25）', forcePredictionStopped:'预测已停止；点击“启动预测”即可开始，只需GIGA数据，不需要Nano25',forcePredictionLoading:'正在加载预测模型…',
               forcePredictionReady:'仅用于监测，不参与控制', forcePredictionError:'模型预测不可用',
               forcePredictionWarmup:'历史窗 {n}/{window}', forcePredictionOutOfRange:'输入超出训练数据范围，请谨慎使用',
               modes:'模式', ventAll:'全机放气', automatic:'自动', teaching:'示教', test:'测试',
@@ -6642,14 +6683,14 @@ def main():
               driveEnabled:'Pose sync is enabled. After zeroing, the current pose is displayed as (0,0,0).',
               driveDisabled:'Pose sync is disabled.', zeroed:'Zeroed: the current sensor pose is the mechanical zero (0,0,0), and pose sync is enabled.',
               muscleParameters:'Muscle Parameters', muscleParametersHelp:'Muscle lengths from 20 encoders and six real-time pressures',
-              nano25Title:'Nano25', forcePredictionHide:'Hide Pred.', forcePredictionShow:'Show Pred.', nano25Start:'Start Nano25', nano25Stop:'Stop Nano25', nano25Starting:'Starting…',
+              nano25Title:'Nano25', forcePredictionStop:'Stop Pred.', forcePredictionStart:'Start Pred.', nano25Start:'Start Nano25', nano25Stop:'Stop Nano25', nano25Starting:'Starting…',
               nano25Zeroing:'Zeroing…', nano25Stopping:'Stopping…', nano25Stopped:'Not started', nano25Error:'Acquisition fault',
               nano25Help:'Optional sensor; trajectories can run without it. Keep it unloaded before starting. After an approximately 5-second zero, force is displayed in GUI Y, Z, X order with all signs reversed.',
               nano25ControlRequired:'Continuous acquisition during control', forcePredictionInline:'Pred.',
               forcePredictionTitle:'Model-Predicted Force (20 Hz)', forcePredictionReset:'Reset Prediction Zero',
               forcePredictionMode:'Prediction', forcePredictionFusion:'Fusion network',
               forcePredictionSeparate:'Separate axis models',
-              forcePredictionWaiting:'Waiting for six-channel pressure and length data', forcePredictionLoading:'Loading prediction models…',
+              forcePredictionWaiting:'Waiting for GIGA six-channel pressure and length data (Nano25 not required)', forcePredictionStopped:'Prediction stopped; click Start Pred. to begin. Needs GIGA data only, not Nano25',forcePredictionLoading:'Loading prediction models…',
               forcePredictionReady:'Monitoring only; not connected to control', forcePredictionError:'Force prediction unavailable',
               forcePredictionWarmup:'History window {n}/{window}', forcePredictionOutOfRange:'Input is outside the training range; use with caution',
               modes:'Modes', ventAll:'Vent All', automatic:'Automatic', teaching:'Teaching', test:'Test',
@@ -7515,7 +7556,7 @@ def main():
             if (window.__qtTwentySensors) return;
             window.__qtTwentySensors = true;
             // 颜色只表示六路比例阀当前收到的驱动指令，不再由长度传感器变化判断。
-            // 通道顺序与发送给固件的 W/O 指令一致：V0..V5。
+            // 通道顺序与发送给固件的 W/O/C 指令一致：V0..V5。
             window.__qtLastDriveU = Array(6).fill(0);
             const refreshDriveColors = () => {
               document.querySelectorAll('#enc-lens .qt-sensor-pair[data-drive-channel]').forEach(node => {
@@ -7532,7 +7573,7 @@ def main():
               try {
                 const text = String(command == null ? '' : command).trim();
                 const kind = text.charAt(0).toUpperCase();
-                if (kind === 'W' || kind === 'O') {
+                if (kind === 'W' || kind === 'O' || kind === 'C') {
                   const values = text.slice(1).split(',').slice(0, 6).map(Number);
                   if (values.length === 6 && values.every(Number.isFinite))
                     window.__qtLastDriveU = values.map(v => Math.max(0, v));
@@ -7823,11 +7864,12 @@ def main():
             const drv = document.getElementById('tc-drv');
             if (drv) drv.title = String(drv.title).replace('≤2V', '≤3V');
           }
-          // Qt 本地版的四个固定开环模式。它们不读取示教点：
+          // Qt 本地版的五个固定开环模式。它们不读取示教点：
           //   1) 15(V0) 令 Y 到用户目标，再由 9(V4) 令 X 到用户目标，最后全机回零；
           //   2) 15(V0) 与 48(V1) 依次令 Y 到两个用户目标；
           //   3) 15→23→48→67：每路升压1.5s、减压1s；开始减压时启动下一路。
           //   4) 48(V1) 令 Y 到负向用户目标，再由 23(V2) 令 φ 到正向用户目标，最后全机回零。
+          //   5) 同 Mode 3 的主侧顺序，并同时驱动对侧拮抗肌（V0↔V1、V2↔V3），走 C 共收缩流。
           // 操作界面的每个模式可独立选择“单次/循环”；debug 保持原来的连续循环。
           // Mode 1/4 每阶段最长3s，Mode 2每阶段最长5s；停止/异常立即清零六路比例阀。
           const installFixedOpenLoop = () => {
@@ -7856,7 +7898,7 @@ def main():
                 <option value="mode2">Mode 2｜Y +60° → Y −20° 循环</option>
                 <option value="mode3">Mode 3｜15 → 23 → 48 → 67 循环</option>
                 <option value="mode4">Mode 4｜Y −30° → φ +20° → 全回0 循环</option>
-                <option value="mode5">Mode 5｜15 → 23 → 48 → 67，对侧延迟共充</option>
+                <option value="mode5">Mode 5｜15 → 23 → 48 → 67 ＋对侧共收缩 循环</option>
               </select>
               <span class="aux" id="qt-open-fixed-note"></span>`;
             mode.closest('.btns').insertAdjacentElement('afterend', anglePanel);
@@ -7867,7 +7909,7 @@ def main():
               mode2: '15→Y+60°，48→Y−20°；每阶段≤5s，连续循环，3000mV',
               mode3: '每路2.5s：升压1.5s＋减压1s；前三次间隔1.5s，67→下一轮15间隔2s；一轮6.5s',
               mode4: '48→Y−30°，23→φ+20°，六路0mV保持1s后再循环；每阶段≤3s，3000mV',
-              mode5: '主侧升压1.5s、降压1s；对侧0.5～1s升到3000mV、保持到1.5s，然后两侧一起降压；每轮均执行'
+              mode5: '主侧同Mode 3（3000mV）；对侧0.5s后升压0.5s到1500mV、保持0.5s、随主侧降压1s；V0↔V1、V2↔V3；C共收缩流；一轮6.5s，末轮7s'
             };
             const showAnglePanel = () => {
               anglePanel.style.display = mode.value === 'open' ? 'flex' : 'none';
@@ -7888,6 +7930,9 @@ def main():
             let activeDurationMin = null;
             let activeDeadlineMs = Infinity;
             let mode3StopAfterLap = null;
+            let mode5StopAfterLap = null;
+            let mode5WriteRejected = false;
+            let fixedRunToken = 0;
             const mode1StageTimeoutS = 3.0;
             const mode2StageTimeoutS = 5.0;
             const mode1PrelockS = 0.100;
@@ -7901,27 +7946,31 @@ def main():
               {name:'15', ch:0}, {name:'23', ch:2},
               {name:'48', ch:1}, {name:'67', ch:3}
             ];
-            // Mode 5独立计算，保留Mode 3原有时序；跨轮保留67的末尾降压。
-            const mode5OutputAt = (seconds, lapLimit=Infinity) => {
-              const lapS = cycleStartStepS*(cycleChannels.length-1)+cycleBoundaryStepS;
-              const lap = Math.floor(Math.max(0,seconds)/lapS);
-              const result = [0,0,0,0,0,0];
-              const rise = fraction => 0.5*(1-Math.cos(Math.PI*fraction));
-              for (const previousLap of [lap-1,lap]) {
-                if (previousLap < 0 || previousLap >= lapLimit) continue;
-                cycleChannels.forEach((item,index) => {
-                  const age = seconds-previousLap*lapS-index*cycleStartStepS;
-                  if (age < 0 || age >= cycleActiveS) return;
-                  const fall = age >= cycleRiseS
-                    ? 0.5*(1+Math.cos(Math.PI*(age-cycleRiseS)/cycleFallS)) : 1;
-                  const primary = age < cycleRiseS ? rise(age/cycleRiseS) : fall;
-                  const opposite = age < 0.5 ? 0 : age < 1.0
-                    ? rise((age-0.5)/0.5) : fall;
-                  result[item.ch] = Math.max(result[item.ch],Math.round(fullMv*primary));
-                  result[item.ch^1] = Math.max(result[item.ch^1],Math.round(fullMv*opposite));
-                });
-              }
-              return result;
+            // Mode 5：主侧沿用 Mode 3 的升压1.5s/降压1s与1.5s启动间隔；对侧拮抗肌
+            // （V0↔V1、V2↔V3）先保持0mV 0.5s，再用0.5s升到对侧峰值并保持到1.5s，随后与主侧一起降压。
+            // 对侧峰值为主侧的一半（1500mV），避免拮抗拉力过大。
+            const mode5PairDelayS = 0.5;
+            const mode5PairRiseS = 0.5;
+            const mode5PairMv = fullMv/2;
+            const mode5Actions = [
+              {name:'15', ch:0, pairName:'48', pair:1}, {name:'23', ch:2, pairName:'67', pair:3},
+              {name:'48', ch:1, pairName:'15', pair:0}, {name:'67', ch:3, pairName:'23', pair:2}
+            ];
+            // 下一轮15在6.5s启动；最后一轮要等67及其对侧降完，即该轮开始后7s才结束。
+            const mode5LapS = cycleStartStepS*(mode5Actions.length-1)+cycleBoundaryStepS;
+            const mode5LastLapS = cycleStartStepS*(mode5Actions.length-1)+cycleActiveS;
+            const mode5PrimaryEnvelope = age => {
+              if (age < 0 || age >= cycleActiveS) return 0;
+              if (age < cycleRiseS)
+                return 0.5*(1-Math.cos(Math.PI*age/cycleRiseS));
+              return 0.5*(1+Math.cos(Math.PI*(age-cycleRiseS)/cycleFallS));
+            };
+            const mode5PairEnvelope = age => {
+              if (age < mode5PairDelayS || age >= cycleActiveS) return 0;
+              if (age < mode5PairDelayS+mode5PairRiseS)
+                return 0.5*(1-Math.cos(Math.PI*(age-mode5PairDelayS)/mode5PairRiseS));
+              if (age < cycleRiseS) return 1;
+              return 0.5*(1+Math.cos(Math.PI*(age-cycleRiseS)/cycleFallS));
             };
             let timer = 0, running = false, phase = 0, phaseStartedAt = 0;
             let lastUiAt = 0, activeMode = 'mode1', cycleIndex = 0, cycleLap = 1;
@@ -7935,11 +7984,24 @@ def main():
               lastUiAt = 0; cycleIndex = 0; cycleLap = 1; cycleStartedAt = 0;
               activeRunLimit = Infinity; activeDurationMin = null;
               activeDeadlineMs = Infinity; mode3StopAfterLap = null;
+              mode5StopAfterLap = null; mode5WriteRejected = false;
               fixedMode.disabled = false;
             };
             const writeOpen = (out) => {
               // O是teach_mode的开环专用流，允许3000mV；W由gains.json:u_max限幅。
-              imuSend((activeMode === 'mode5' ? 'C' : 'O')+out.join(',')+'\n');
+              imuSend('O'+out.join(',')+'\n');
+              postOpenTelemetry(out);
+            };
+            const writeCoContraction = (out) => {
+              // C是teach_mode的共收缩流：与O一样保留每路100ms预锁、最终限幅和看门狗，
+              // 但不把V0/V1、V2/V3投影成单侧；只供Mode 5使用。宿主拒发即中止本次运行。
+              const token = fixedRunToken;
+              Promise.resolve(imuSend('C'+out.join(',')+'\n')).then(ok => {
+                if (ok === false && token === fixedRunToken && running) mode5WriteRejected = true;
+              }, () => {});
+              postOpenTelemetry(out);
+            };
+            const postOpenTelemetry = (out) => {
               // 保留开环的实时角度遥测，便于在“控制响应”窗口观察。
               if (typeof imuQ !== 'undefined' && typeof imuOn !== 'undefined' && imuOn) {
                 try {
@@ -7959,6 +8021,8 @@ def main():
             const finishSequence = (message, bad=false, allowQueue=true) => {
               const completedMode = activeMode;
               clearSequence();
+              // Mode 5 先在同一条C流上请求六路0，再发通用O清零（固件未识别C时也能清零）。
+              if (completedMode === 'mode5') writeCoContraction([0,0,0,0,0,0]);
               writeOpen([0,0,0,0,0,0]);
               // 普通开环结束只清零比例阀，不发 s：有压通道继续自锁，
               // 固件确认压力回零后才自动开锁。“全机放气/急停”按钮仍会显式发 s。
@@ -8003,33 +8067,6 @@ def main():
               const isTwoAxisMode = activeMode === 'mode1' || activeMode === 'mode4';
               const isMode4 = activeMode === 'mode4';
               const twoAxisModeLabel = isMode4 ? 'Mode 4' : 'Mode 1';
-
-              if (activeMode === 'mode5') {
-                const cycleElapsed = Math.max(0,(now-cycleStartedAt)/1000.0);
-                const lapS = cycleStartStepS*(cycleChannels.length-1)+cycleBoundaryStepS;
-                const rawLapIndex = Math.floor(cycleElapsed/lapS);
-                if (!activeLoop) mode3StopAfterLap = 1;
-                else if (Number.isFinite(activeRunLimit)) mode3StopAfterLap = activeRunLimit;
-                else if (now >= activeDeadlineMs && mode3StopAfterLap == null)
-                  mode3StopAfterLap = rawLapIndex+1;
-                // 最后一轮67于4.5s启动，完整降压结束于7s；不再截断最后0.5s。
-                const endS = mode3StopAfterLap == null ? Infinity
-                  : (mode3StopAfterLap-1)*lapS
-                    +cycleStartStepS*(cycleChannels.length-1)+cycleActiveS;
-                if (cycleElapsed >= endS) {
-                  finishSequence(`<b>Mode 5 已完成 ${mode3StopAfterLap} 轮</b>，六路比例阀已清零。`);
-                  return;
-                }
-                cycleLap = Math.min(rawLapIndex+1,mode3StopAfterLap || Infinity);
-                out = mode5OutputAt(cycleElapsed,mode3StopAfterLap || Infinity);
-                writeOpen(out);
-                if (now-lastUiAt >= 500) {
-                  lastUiAt = now;
-                  if (typeof tcSay === 'function') tcSay(
-                    `<b>Mode 5｜第${cycleLap}轮｜对侧延迟共充</b> u=[${out.join(', ')}]mV`,false);
-                }
-                return;
-              }
 
               if (activeMode === 'mode3') {
                 // 一个脉冲持续2.5s：0~1.5s升压、1.5~2.5s减压，不设保持段。
@@ -8078,6 +8115,58 @@ def main():
                   const action = '平滑升压';
                   if (typeof tcSay === 'function') tcSay(
                     `<b>Mode 3｜第${cycleLap}轮 ${item.name}(V${item.ch})</b>：${action}=${currentMv}mV${previousText}`, false);
+                }
+                return;
+              }
+
+              if (activeMode === 'mode5') {
+                // 每个主侧动作以自身启动为t=0，主侧在每轮0/1.5/3/4.5s启动，同时驱动对侧。
+                // 跨轮时上一轮67及其对侧23的降压尾段(6.5~7s)与新一轮15叠加输出，不截断。
+                if (mode5WriteRejected) {
+                  finishSequence('<b>Mode 5 已中止</b>：宿主串口层拒绝了C共收缩指令（独占测试正在运行或串口不可用）；已请求六路比例阀清零，有压通道继续自锁。', true);
+                  return;
+                }
+                const cycleElapsed = Math.max(0, (now-cycleStartedAt)/1000.0);
+                const rawLapIndex = Math.floor(cycleElapsed/mode5LapS);
+                if (!activeLoop) mode5StopAfterLap = 1;
+                else if (Number.isFinite(activeRunLimit)) mode5StopAfterLap = activeRunLimit;
+                else if (now >= activeDeadlineMs && mode5StopAfterLap == null)
+                  mode5StopAfterLap = rawLapIndex+1;
+                const scheduledRunS = mode5StopAfterLap == null
+                  ? Infinity : mode5LapS*(mode5StopAfterLap-1)+mode5LastLapS;
+                if (cycleElapsed >= scheduledRunS) {
+                  finishSequence(activeLoop
+                    ? `<b>Mode 5 循环运行完成</b>，已完成 ${mode5StopAfterLap} 轮，六路比例阀已清零。`
+                    : '<b>Mode 5 单次运行完成</b>，六路比例阀已清零。');
+                  return;
+                }
+                // 只叠加当前轮和上一轮（尾段）；已到停止轮次后不再启动新一轮的15。
+                const lastLap = mode5StopAfterLap == null
+                  ? rawLapIndex : Math.min(rawLapIndex, mode5StopAfterLap-1);
+                let latest = null;
+                for (let lap = Math.max(0, rawLapIndex-1); lap <= lastLap; lap++) {
+                  mode5Actions.forEach((action, index) => {
+                    const age = cycleElapsed-lap*mode5LapS-index*cycleStartStepS;
+                    if (age < 0 || age >= cycleActiveS) return;
+                    const primaryMv = Math.round(fullMv*mode5PrimaryEnvelope(age));
+                    const pairMv = Math.round(mode5PairMv*mode5PairEnvelope(age));
+                    out[action.ch] = Math.max(out[action.ch], primaryMv);
+                    out[action.pair] = Math.max(out[action.pair], pairMv);
+                    latest = {lap, action, age, primaryMv, pairMv};
+                  });
+                }
+                cycleLap = (latest ? latest.lap : rawLapIndex)+1;
+                writeCoContraction(out);
+                if (latest && now-lastUiAt >= 500) {
+                  lastUiAt = now;
+                  const item = latest.action;
+                  const mainState = latest.age < cycleRiseS ? '升压' : '降压';
+                  const pairState = latest.age < mode5PairDelayS ? '等待'
+                    : latest.age < mode5PairDelayS+mode5PairRiseS ? '升压'
+                    : latest.age < cycleRiseS ? '保持' : '降压';
+                  if (typeof tcSay === 'function') tcSay(
+                    `<b>Mode 5｜第${cycleLap}轮 ${item.name}(V${item.ch}) ⇄ ${item.pairName}(V${item.pair})</b>：`+
+                    `主侧${mainState}=${latest.primaryMv}mV，对侧${pairState}=${latest.pairMv}mV；六路 ${out.join('/')} mV`, false);
                 }
                 return;
               }
@@ -8262,6 +8351,7 @@ def main():
               activeDurationMin = null;
               activeDeadlineMs = Infinity;
               mode3StopAfterLap = null;
+              mode5StopAfterLap = null; mode5WriteRejected = false;
               if ((!activeLoop || window.__qtTimedAutomaticActive) && typeof window.__qtGetFixedOpenConfig === 'function') {
                 const cfg = window.__qtGetFixedOpenConfig(activeMode) || {};
                 if (Number.isFinite(Number(cfg.targetYDeg))) targetYDeg = Number(cfg.targetYDeg);
@@ -8284,6 +8374,7 @@ def main():
                 if (driveButton) driveButton.setAttribute('aria-pressed', 'true');
               }
               if (rawStop) rawStop();
+              fixedRunToken += 1;
               running = true; tcPlaying = true; phase = 0; cycleIndex = 0; cycleLap = 1;
               phaseStartedAt = performance.now(); cycleStartedAt = phaseStartedAt; lastUiAt = 0;
               activeDeadlineMs = activeLoop && activeDurationMin != null
@@ -8299,7 +8390,7 @@ def main():
                   : activeMode === 'mode4'
                   ? `Mode 4｜Y ${targetYDeg.toFixed(1)}° → φ ${targetPhiDeg.toFixed(1)}° → 回零`
                   : activeMode === 'mode5'
-                  ? 'Mode 5｜15 → 23 → 48 → 67｜对侧0.5s后共充'
+                  ? 'Mode 5｜15 → 23 → 48 → 67（对侧 V0↔V1、V2↔V3 共收缩）'
                   : 'Mode 3｜15 → 23 → 48 → 67';
                 tcSay(`<b>${task}｜${activeLoop ? '循环' : '单次'}</b> 已启动。`, false);
               }
@@ -8309,11 +8400,13 @@ def main():
             if (rawStop) {
               window.tcStop = function(...args) {
                 const wasRunning = running;
+                const wasMode5 = activeMode === 'mode5';
                 clearSequence();
                 if (typeof window.__qtCancelFixedOpenQueue === 'function')
                   window.__qtCancelFixedOpenQueue(false);
                 const answer = rawStop.apply(this, args);
                 if (wasRunning) {
+                  if (wasMode5) writeCoContraction([0,0,0,0,0,0]);
                   writeOpen([0,0,0,0,0,0]);
                 }
                 return answer;
@@ -8353,7 +8446,7 @@ def main():
                       '<option value="separate">三轴分开模型</option>'+
                     '</select></label>'+ 
                   '<button class="btn" id="qt-nano25-toggle" type="button">启动 Nano25</button>'+ 
-                  '<button class="btn" id="qt-force-prediction-collapse" type="button" aria-expanded="true">隐藏预测力</button></h2>'+ 
+                  '<button class="btn" id="qt-force-prediction-toggle" type="button" aria-pressed="true">停止预测</button></h2>'+
                 '<div id="qt-nano25-body">'+
                 '<div id="qt-nano25-values" title="F_GUI[Y,Z,X] = -F_Nano25">'+
                   '<span class="qt-nano25-value" data-nano-index="0"><i>F<sub>Y</sub></i><span class="qt-nano25-reading"><span class="qt-force-prediction-inline" data-force-axis="1"><small>预测</small><strong>--</strong></span><b>0.000</b></span><em>N</em></span>'+ 
@@ -8367,32 +8460,12 @@ def main():
                 '</div>';
               lengthSection.insertAdjacentElement('afterend', nanoPanel);
               const nanoButton = nanoPanel.querySelector('#qt-nano25-toggle');
-              const predictionCollapse = nanoPanel.querySelector('#qt-force-prediction-collapse');
               const nanoRate = nanoPanel.querySelector('#qt-nano25-rate');
               const nanoValues = Array.from(nanoPanel.querySelectorAll('.qt-nano25-value'));
               const nanoStateText = nanoPanel.querySelector('#qt-nano25-state');
               let nanoState = 'stopped';
               let nanoPayload = {state:'stopped', hz:0, force_n:[0,0,0], torque_nm:[0,0,0]};
               let nanoRequirement = false;
-              let predictionCollapsed = false;
-              try { predictionCollapsed = localStorage.getItem('tro-force-prediction-collapsed') === '1'; }
-              catch (_) {}
-              const setPredictionCollapsed = (collapsed, persist=true) => {
-                predictionCollapsed = !!collapsed;
-                nanoPanel.classList.toggle('qt-force-prediction-hidden', predictionCollapsed);
-                if (predictionCollapse) {
-                  predictionCollapse.setAttribute('aria-expanded', String(!predictionCollapsed));
-                  predictionCollapse.textContent = qtOpText(
-                    predictionCollapsed ? 'forcePredictionShow' : 'forcePredictionHide');
-                }
-                if (persist) {
-                  try { localStorage.setItem('tro-force-prediction-collapsed', predictionCollapsed ? '1' : '0'); }
-                  catch (_) {}
-                }
-              };
-              if (predictionCollapse) predictionCollapse.onclick = () =>
-                setPredictionCollapsed(!predictionCollapsed);
-              setPredictionCollapsed(predictionCollapsed, false);
               const nanoActive = state => ['starting','zeroing','running','reconnecting','stopping'].includes(state);
               const nanoControlRunning = () => {
                 const fixed = typeof window.__qtFixedOpenIsRunning === 'function' &&
@@ -8461,7 +8534,6 @@ def main():
               };
               window.__qtApplyNano25Language = () => {
                 nanoPanel.querySelector('#qt-nano25-title').textContent = qtOpText('nano25Title');
-                setPredictionCollapsed(predictionCollapsed, false);
                 renderNano();
               };
               const requestNanoAction = method => {
@@ -8517,8 +8589,12 @@ def main():
               const predictionMode = nanoPanel.querySelector('#qt-force-prediction-mode');
               const predictionModeLabel = nanoPanel.querySelector(
                 '#qt-force-prediction-mode-label');
+              // 预测只依赖GIGA帧（六路压力/长度/编码器），与Nano25是否连接无关；
+              // 按钮直接启动/停止宿主端预测，出错时点击即重新启动。
+              const predictionToggle = nanoPanel.querySelector('#qt-force-prediction-toggle');
+              let predictionToggleBusy = false;
               let predictionPayload = {
-                state:'waiting', force_xyz_n:[0,0,0], hz:0, latency_ms:0,
+                state:'waiting', enabled:true, force_xyz_n:[0,0,0], hz:0, latency_ms:0,
                 history_samples:0, window_size:1, prediction_mode:'fusion'
               };
               const predictionNumber = value => {
@@ -8561,6 +8637,7 @@ def main():
                 if (state === 'error') statusText =
                   `${qtOpText('forcePredictionError')}: ${predictionPayload.message||''}`;
                 else if (state === 'loading') statusText = qtOpText('forcePredictionLoading');
+                else if (state === 'stopped') statusText = qtOpText('forcePredictionStopped');
                 else if (state === 'ready') {
                   const warmup = historyCount < windowSize
                     ? ` · ${qtOpText('forcePredictionWarmup')
@@ -8575,6 +8652,16 @@ def main():
                   element.classList.toggle('error', state === 'error');
                   element.classList.toggle('warning', outOfRange);
                 });
+                const enabled = predictionPayload.enabled !== false;
+                const startable = !enabled || state === 'error';
+                nanoPanel.classList.toggle('qt-force-prediction-hidden', !enabled);
+                if (predictionToggle) {
+                  predictionToggle.setAttribute('aria-pressed', String(!startable));
+                  predictionToggle.textContent = qtOpText(
+                    startable ? 'forcePredictionStart' : 'forcePredictionStop');
+                  predictionToggle.title = statusText;
+                  predictionToggle.disabled = predictionToggleBusy;
+                }
               };
               window.__qtApplyForcePredictionLanguage = () => {
                 if (predictionModeLabel)
@@ -8601,6 +8688,22 @@ def main():
                 predictionMode.disabled = true;
                 pyHost.setForcePredictionMode(predictionMode.value, text => {
                   predictionMode.disabled = false;
+                  try { renderForcePrediction(JSON.parse(String(text||'{}'))); }
+                  catch (error) { renderForcePrediction({state:'error',message:error.message}); }
+                });
+              };
+              if (predictionToggle) predictionToggle.onclick = () => {
+                if (typeof pyHost === 'undefined' || !pyHost ||
+                    typeof pyHost.setForcePredictionEnabled !== 'function') {
+                  renderForcePrediction({state:'error',
+                    message:'Force prediction control is unavailable.'});
+                  return;
+                }
+                const start = predictionPayload.enabled === false ||
+                  String(predictionPayload.state) === 'error';
+                predictionToggleBusy = true; renderForcePrediction();
+                pyHost.setForcePredictionEnabled(start, text => {
+                  predictionToggleBusy = false;
                   try { renderForcePrediction(JSON.parse(String(text||'{}'))); }
                   catch (error) { renderForcePrediction({state:'error',message:error.message}); }
                 });
@@ -8632,7 +8735,7 @@ def main():
               style.textContent =
                 '#qt-operation-nano25{padding-top:10px;padding-bottom:10px}'+
                 '#qt-operation-nano25 #qt-nano25-toggle{padding:4px 8px;font-size:10.5px;font-weight:650}'+
-                '#qt-operation-nano25 #qt-force-prediction-collapse{padding:4px 7px;font-size:10.5px;font-weight:650}'+
+                '#qt-operation-nano25 #qt-force-prediction-toggle{padding:4px 7px;font-size:10.5px;font-weight:650}'+
                 '#qt-operation-nano25 #qt-nano25-rate{margin-right:7px;white-space:nowrap}'+
                 '#qt-operation-nano25 .qt-force-mode{display:inline-flex;align-items:center;gap:4px;white-space:nowrap}'+
                 '#qt-operation-nano25 #qt-force-prediction-mode{max-width:118px;padding:2px 4px;font-size:10px}'+
@@ -8808,7 +8911,7 @@ def main():
                     '</div></div>'+ 
                   '<div class="qt-op-auto-mode" data-fixed-mode="mode5" data-selected="false">'+
                     '<button class="btn qt-op-auto-select">模式 5</button><div class="qt-op-auto-config">'+
-                      '<span class="qt-op-sequence" title="主侧升压1.5s、降压1s；对侧0.5～1s升至3000mV，保持至1.5s后共同降压">15 → 23 → 48 → 67 ＋ 对侧</span>'+
+                      '<span class="qt-op-sequence" title="主侧15→23→48→67（3000mV）；每个主侧动作同时驱动对侧（1500mV）：V0↔V1、V2↔V3">15 → 23 → 48 → 67 ⇄</span>'+
                       '<label class="qt-op-loop"><input type="checkbox" id="qt-op-m5-loop">循环</label>'+
                       '<label class="qt-op-limit"><input type="number" id="qt-op-m5-limit" min="1" max="999" step="1" value="1" placeholder="∞" title="留空表示无限运行"><select id="qt-op-m5-unit"><option value="runs">圈</option><option value="min">mins</option></select></label>'+
                     '</div></div>'+

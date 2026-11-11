@@ -5,7 +5,13 @@ import json
 import sys
 from pathlib import Path
 
-from force_predictor import ForceEstimator
+# The portable .python310 runs in ._pth mode, which ignores the script folder
+# (and PYTHONPATH); add it explicitly so force_predictor.py next to us imports.
+_HERE = str(Path(__file__).resolve().parent)
+if _HERE not in sys.path:
+    sys.path.insert(0, _HERE)
+
+from force_predictor import ForceEstimator  # noqa: E402
 
 
 PREFIX = "FORCE_PREDICTION "

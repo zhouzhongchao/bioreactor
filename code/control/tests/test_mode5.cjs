@@ -35,15 +35,16 @@ const output=line=>line.slice(1).trim().split(',').map(Number);
 let h=harness('mode5',{loop:true,limitValue:2,limitUnit:'runs'});
 assert.ok(h.sent[0].startsWith('C'));
 assert.equal(output(h.at(0.4))[1],0);
-assert.deepEqual(output(h.at(0.75)).slice(0,2),[1500,1500]);
-assert.equal(output(h.at(1.0))[1],3000);
-assert.deepEqual(output(h.at(1.5)).slice(0,2),[3000,3000]);
-assert.deepEqual(output(h.at(2.0)).slice(0,2),[1500,1500]);
+// Opposite (antagonist) side peaks at half the primary: 1500 mV.
+assert.deepEqual(output(h.at(0.75)).slice(0,2),[1500,750]);
+assert.equal(output(h.at(1.0))[1],1500);
+assert.deepEqual(output(h.at(1.5)).slice(0,2),[3000,1500]);
+assert.deepEqual(output(h.at(2.0)).slice(0,2),[1500,750]);
 for(const t of [2.5,4.0,5.5,7.5,9.0,10.5,12.0]) {
   const index=Math.round((t%6.5-1)/1.5);
   const primary=[0,2,1,3][index];
   const u=output(h.at(t));
-  assert.equal(u[primary^1],3000,'opposite plateau '+t);
+  assert.equal(u[primary^1],1500,'opposite plateau '+t);
   assert.ok(u.every(v=>v>=0 && v<=3000));
 }
 // A fresh scheduler verifies the boundary tail is not truncated.
@@ -60,6 +61,9 @@ for(const cfg of [{loop:false},{loop:true,limitValue:0.1,limitUnit:'min'}]) {
 }
 h=harness('mode5',{loop:true});h.at(0.75);h.context.tcStop();
 assert.ok(!h.running());assert.deepEqual(output(h.sent.at(-1)),[0,0,0,0,0,0]);
+// Stop zeroes the C co-contraction stream first, then sends the generic O zero.
+assert.ok(h.sent.at(-2).startsWith('C'));assert.deepEqual(output(h.sent.at(-2)),[0,0,0,0,0,0]);
+assert.ok(h.sent.at(-1).startsWith('O'));
 h=harness('mode3');assert.ok(h.at(0.75).startsWith('O'));
 assert.equal(output(h.sent.at(-1))[1],0);
 h=harness('mode1');assert.ok(h.sent[0].startsWith('M'));
