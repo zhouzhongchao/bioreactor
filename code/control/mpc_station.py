@@ -922,7 +922,30 @@ def st_from_q_model(q):
 
 # 控制响应遥测环形缓冲：bridge 的 /step 每拍写入，qt_gui 的「控制响应」窗口读取绘图
 from collections import deque
-TELEM = deque(maxlen=6000)                       # 10分钟@10Hz，或5分钟@20Hz
+class ResponseTelemetry(deque):
+    """Bound plotting work without discarding the current response for export."""
+
+    def __init__(self, maxlen=6000):
+        super().__init__(maxlen=maxlen)
+        self._export_rows = []
+        self._export_lock = threading.RLock()
+
+    def append(self, record):
+        with self._export_lock:
+            self._export_rows.append(record)
+            super().append(record)
+
+    def clear(self):
+        with self._export_lock:
+            self._export_rows.clear()
+            super().clear()
+
+    def export_snapshot(self):
+        with self._export_lock:
+            return list(self._export_rows)
+
+
+TELEM = ResponseTelemetry(maxlen=6000)
 # Available before bridge startup; mode_bridge publishes its live state here.
 BR = {"mode": "idle", "codex_mpc": False, "codex_auto_status": {}}
 HOST_LOCKS = ""                                  # qt_gui 串口层从固件帧直接更新（o/w/L×6）

@@ -1941,14 +1941,15 @@ class SerialBridge(QtCore.QObject):
         return {"ok": True, "saving": True, "rows": len(rows), "path": path}
 
     def _control_response_rows(self):
-        """Return exactly the samples currently shown by CONTROL RESPONSE."""
+        """Export the full response, independently of the bounded plot window."""
         import mpc_station as st
 
         rows = []
         group_zero = None
         previous_pose = None
         previous_time = None
-        for record in list(st.TELEM):
+        snapshot = getattr(st.TELEM, "export_snapshot", None)
+        for record in (snapshot() if snapshot is not None else list(st.TELEM)):
             pose = record.get("q_gui")
             if pose is None:
                 pose = st.st3_from_q_model(np.radians(record.get("q", [0, 0, 0])))
@@ -1998,17 +1999,22 @@ class SerialBridge(QtCore.QObject):
 
     @QtCore.pyqtSlot(result=str)
     def saveDataSnapshot(self):
-        """Overwrite response.xlsx from the same samples drawn in CONTROL RESPONSE."""
+        """Save accumulated recording rows without replacing them with plot rows."""
         with self._data_recording_lock:
-            rows = self._control_response_rows()
+            record = self._data_recording
+            if record is None or not record.get("rows"):
+                rows = self._control_response_rows()
+            else:
+                rows = None
             if rows:
                 record = {"rows": rows, "path": self._control_response_workbook_path()}
-                self._last_data_recording = record
-            else:
+            elif record is None or not record.get("rows"):
                 # A completed controller run may clear the live telemetry before
                 # the operator presses Save.  Preserve and save the most recent
                 # completed response instead of replacing it with an empty one.
                 record = self._data_recording or self._last_data_recording
+            if record is not None:
+                self._last_data_recording = record
             result = self._queue_data_snapshot(record) if record is not None else None
         if result is None:
             return json.dumps({"ok": False, "error": "当前没有可保存的控制响应数据"},
@@ -2020,9 +2026,10 @@ class SerialBridge(QtCore.QObject):
         with self._data_recording_lock:
             record = self._data_recording
             self._data_recording = None
-            rows = self._control_response_rows()
-            if rows:
-                record = {"rows": rows, "path": self._control_response_workbook_path()}
+            if record is None or not record.get("rows"):
+                rows = self._control_response_rows()
+                if rows:
+                    record = {"rows": rows, "path": self._control_response_workbook_path()}
             if record is not None:
                 self._last_data_recording = record
             result = self._queue_data_snapshot(record) if record is not None else None
