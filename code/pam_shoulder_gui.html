@@ -3174,11 +3174,12 @@ async function tcMpcStart(){
     if(tcMpcBusy||!imuOn) return;                  // 上一拍还没回来就跳过，不排队
     tcMpcBusy=true;
     try{
-      const nano=window.__qtNano25Snapshot||{};
+      const nano=window.__qtNano25Snapshot||{},pred=window.__qtPredictedForceSnapshot||{};
       const r=await (await fetch(TC_STATION+'/step',{method:'POST',
         body:JSON.stringify({quat:Array.from(imuQ), lens:imuLensNum, kpa:imuKpa, n:imuN,
           force_gui_yzx_n:nano.valid?nano.force_gui_yzx_n:null,
-          torque_xyz_nm:nano.valid?nano.torque_xyz_nm:null})})).json();
+          torque_xyz_nm:nano.valid?nano.torque_xyz_nm:null,
+          force_pred_xyz_n:pred.valid?pred.force_xyz_n:null})})).json();
       if(r.mode==='mpc'||r.mode==='done'){
         imuSend('W'+r.u.join(',')+'\n');           // 闭环指令经 GUI 写回串口
         const responseNow=performance.now();

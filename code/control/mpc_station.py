@@ -6065,6 +6065,7 @@ def mode_bridge(args):
                                           for pair in vent_group_displacement],
                                       "force_gui_yzx_n": data.get("force_gui_yzx_n"),
                                       "torque_xyz_nm": data.get("torque_xyz_nm"),
+                                      "force_pred_xyz_n": data.get("force_pred_xyz_n"),
                                       "e": math.degrees(np.linalg.norm(vent_control_model-q)),
                                       **stage_payload})
                         if BR["venting"] == 0:                 # 放气完毕才复位瞬态：每轮从干净初始态出发
@@ -6811,6 +6812,7 @@ def mode_bridge(args):
                                       for pair in group_displacement_raw],
                                   "force_gui_yzx_n": data.get("force_gui_yzx_n"),
                                   "torque_xyz_nm": data.get("torque_xyz_nm"),
+                                  "force_pred_xyz_n": data.get("force_pred_xyz_n"),
                                   "lock_cmd": ([int(v) for v in lock_cmd]
                                                if BR.get("ctrl") == "mpc" else None),
                                   "default1_phi_v3_assist_mv": float(phi_v3_assist_mv),

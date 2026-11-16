@@ -1613,6 +1613,7 @@ class SerialBridge(QtCore.QObject):
         "L_A10_mm", "d_active_A10_mm", "d_passive_A10_mm",
         "F_X_N", "F_Y_N", "F_Z_N",
         "T_X_Nm", "T_Y_Nm", "T_Z_Nm",
+        "F_pred_X_N", "F_pred_Y_N", "F_pred_Z_N",
     )
     DATA_RECORD_CHANNEL_ORDER = (0, 2, 1, 3, 4, 5)
     DATA_RECORD_GROUP_LABELS = ("A1+5", "A2+3", "A4+8", "A6+7", "A9", "A10")
@@ -1639,6 +1640,18 @@ class SerialBridge(QtCore.QObject):
             self._last_data_recording = self._data_recording
         self._recording_emit("data", "recording", "数据记录中", path)
         return json.dumps({"ok": True, "path": path}, ensure_ascii=False)
+
+    def _fresh_predicted_force(self, now):
+        """Latest ready Fx/Fy/Fz prediction, or None×3 once it is older than 0.2 s."""
+        with self._force_prediction_lock:
+            prediction = dict(self._force_prediction_latest)
+        try:
+            age = now-float(prediction.get("timestamp_s"))
+        except (TypeError, ValueError):
+            age = float("inf")
+        if prediction.get("state") != "ready" or not age <= 0.2:
+            return [None]*3
+        return self._record_vector(prediction.get("force_xyz_n"), 3)
 
     @staticmethod
     def _record_vector(value, count, default=None):
@@ -1798,6 +1811,7 @@ class SerialBridge(QtCore.QObject):
                     frame.get("channel_length_mm"), 6),
                 "group_displacement_raw_mm": group_raw,
                 "l15_displacement_raw_mm": list(group_raw[0]),
+                "force_pred_xyz_n": self._fresh_predicted_force(now),
             })
             self._live_response_last_wall = now
         return True
@@ -1880,6 +1894,7 @@ class SerialBridge(QtCore.QObject):
                 response_time_s, *pose, *pose_speed, *pressure,
                 *length_columns,
                 *force_xyz, *nano_torque,
+                *self._fresh_predicted_force(now),
             ])
         return True
 
@@ -1980,10 +1995,11 @@ class SerialBridge(QtCore.QObject):
             force_xyz = ([force_yzx[2], force_yzx[0], force_yzx[1]]
                          if all(value is not None for value in force_yzx) else [None]*3)
             torque_xyz = self._record_vector(record.get("torque_xyz_nm"), 3)
+            force_pred_xyz = self._record_vector(record.get("force_pred_xyz_n"), 3)
             rows.append([
                 sample_time, *pose, *pose_speed, *pressure,
                 *length_columns,
-                *force_xyz, *torque_xyz,
+                *force_xyz, *torque_xyz, *force_pred_xyz,
             ])
         return rows
 
@@ -5068,6 +5084,7 @@ class SerialBridge(QtCore.QObject):
             response_time_s, *pose_values, *pose_speed, *pressure,
             *length_columns,
             *force_xyz, *nano_torque,
+            *self._fresh_predicted_force(now),
         ])
 
     def _queue_slow_rom_response_save(self, test):

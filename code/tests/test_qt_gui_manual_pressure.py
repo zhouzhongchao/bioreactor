@@ -1877,7 +1877,7 @@ def test_data_workbook_has_typed_flat_headers_and_frozen_header(tmp_path):
     sheet = workbook["控制响应"]
     assert sheet.freeze_panes == "A2"
     assert sheet.auto_filter.ref.endswith("2")
-    assert sheet.max_column == 37
+    assert sheet.max_column == 40
     assert [cell.value for cell in sheet[1]] == list(SerialBridge.DATA_RECORD_HEADERS)
     assert sheet["A1"].value == "response_time_s"
     assert sheet["B1"].value == "X_deg"
@@ -1895,6 +1895,8 @@ def test_data_workbook_has_typed_flat_headers_and_frozen_header(tmp_path):
     assert sheet["AE1"].value == "d_passive_A10_mm"
     assert sheet["AF1"].value == "F_X_N"
     assert sheet["AK1"].value == "T_Z_Nm"
+    assert sheet["AL1"].value == "F_pred_X_N"
+    assert sheet["AN1"].value == "F_pred_Z_N"
     assert sheet["A2"].value == pytest.approx(12.05)
     assert sheet["A2"].number_format == "0.000"
     assert sheet["B2"].value == 1.25
@@ -1925,7 +1927,7 @@ def test_response_sample_uses_requested_physical_order_and_gui_force_axes():
     }))
     row = bridge._data_recording["rows"][0]
 
-    assert len(row) == 37
+    assert len(row) == 40
     assert row[0] == pytest.approx(4.25)
     assert row[1:4] == pytest.approx([1.0, 2.0, 3.0])
     assert row[4:7] == pytest.approx([0.0, 0.0, 0.0])
@@ -1940,6 +1942,8 @@ def test_response_sample_uses_requested_physical_order_and_gui_force_axes():
     ])
     assert row[31:34] == pytest.approx([-1.0, -2.0, -3.0])
     assert row[34:37] == pytest.approx([4.0, 5.0, 6.0])
+    # No ready prediction yet: the predicted-force columns stay empty.
+    assert row[37:40] == [None, None, None]
 
     # The first valid sample is the zero. Subsequent A1/A5 active and passive
     # means preserve their signs instead of being converted with abs().
@@ -1963,6 +1967,18 @@ def test_response_sample_uses_requested_physical_order_and_gui_force_axes():
     assert bridge._data_recording["rows"][1][23:25] == pytest.approx([12.0, -6.0])
     assert bridge._data_recording["rows"][1][26:28] == pytest.approx([9.0, -9.0])
     assert bridge._data_recording["rows"][1][29:31] == pytest.approx([-10.0, 10.0])
+
+
+def test_fresh_predicted_force_follows_ready_state_and_age():
+    bridge = SerialBridge()
+    now = time.time()
+    bridge._force_prediction_latest.update({
+        "state": "ready", "force_xyz_n": [1.5, -2.0, 0.25], "timestamp_s": now - 0.05,
+    })
+    assert bridge._fresh_predicted_force(now) == pytest.approx([1.5, -2.0, 0.25])
+    assert bridge._fresh_predicted_force(now + 1.0) == [None, None, None]
+    bridge._force_prediction_latest["state"] = "waiting"
+    assert bridge._fresh_predicted_force(now) == [None, None, None]
 
 
 def test_saved_control_response_zeroes_signed_l15_displacements(monkeypatch):
